@@ -3,6 +3,7 @@ import { PilotInput } from '../core/aircraft'
 import { clamp } from '../core/math'
 import type { Settings } from './settings'
 import type { TouchState } from './touch'
+import type { TiltControl } from './tilt'
 
 export type FlightAction = 'flapsUp' | 'flapsDown' | 'toggleGear' | 'trimUp' | 'trimDown' | 'nextCamera'
   | 'togglePause' | 'toggleHelp' | 'toggleSidebar' | 'toggleInstruments' | 'endFlight' | 'restart'
@@ -42,7 +43,7 @@ export class InputManager {
   start() { this.active = true }
   stop() { this.active = false; this.pressed.clear() }
 
-  sample(dt: number, s: Settings, touch: TouchState | null = null): PilotInput {
+  sample(dt: number, s: Settings, touch: TouchState | null = null, tilt: Pick<TiltControl, 'enabled' | 'receiving' | 'pitch' | 'roll'> | null = null): PilotInput {
     const held = (...codes: string[]) => codes.some(c => this.pressed.has(c))
     const axis = (cur: number, plus: boolean, minus: boolean, rate: number) => {
       const target = plus === minus ? 0 : plus ? 1 : -1
@@ -74,6 +75,12 @@ export class InputManager {
       if (l2 > 0.05) this.throttle = Math.max(0, this.throttle - l2 * 0.6 * dt)
       if (pad.buttons[0]?.pressed) input.trigger = true
       if (pad.buttons[1]?.pressed) input.brakes = 1
+    }
+    // Tilt flies unless a finger is on the on-screen stick.
+    const stickHeld = !!touch?.active && touch.stickHeld
+    if (tilt?.enabled && tilt.receiving && !stickHeld) {
+      input.pitch = tilt.pitch * s.stickSensitivity
+      input.roll = tilt.roll * s.stickSensitivity
     }
     if (touch?.active) {
       if (touch.pitch || touch.roll) { input.pitch = touch.pitch * s.stickSensitivity; input.roll = touch.roll * s.stickSensitivity }

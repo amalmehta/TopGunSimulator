@@ -58,7 +58,7 @@ That serves http://localhost:5173. Open a flight directly with `?start=<lesson i
 npm --prefix web test
 ```
 
-That runs 26 tests, including replays of reference trajectories exported from the Swift flight model, to prove both versions fly identically. To regenerate the references after changing the Swift physics:
+That runs 36 tests, including replays of reference trajectories exported from the Swift flight model, to prove both versions fly identically. To regenerate the references after changing the Swift physics:
 
 ```bash
 GOLDEN_OUT="$PWD/web/tests/fixtures/golden.json" swift test --filter GoldenExport
@@ -76,6 +76,15 @@ Web differences: settings and lesson progress live in the browser's localStorage
 - **Buttons:** Flaps ▲/▼, Trim ▲/▼, Gear (fighter), Cam, Brake (hold), Guns (fighter, hold).
 - On phones the instrument panel starts hidden so the 3D view has room. In landscape the sidebar is hidden too, and a lesson strip shows the current step; the toolbar buttons bring the panels back. Lesson and instructor text say "drag the stick down" instead of "S / ↓".
 - Settings → Flying → Touch controls: Automatic (touch screens), Always on, or Off. You can fly with the stick and change the throttle at the same time (multi-touch).
+
+### Tilt to fly (optional)
+
+Settings → Flying → **Tilt to fly**. Tilt the top of the device toward you to pull up, away to push down, and tip it left or right to roll. About 30° from your neutral hold gives full stick.
+
+- Your neutral hold is captured when the flight starts. Tap **Level** (next to the rudder buttons) any time to make the current hold straight and level.
+- iPhone and iPad ask for motion access when you switch it on. After a page reload, iOS needs one tap on **Enable tilt** to allow it again.
+- Touching the on-screen stick overrides tilt while your finger is on it. Throttle, rudder and the buttons work as usual.
+- It works in portrait and landscape. Stick sensitivity and Invert pitch apply to tilt too. Lesson text says "tilt the top toward you" instead of "drag the stick down".
 
 ## How to learn to fly with it
 

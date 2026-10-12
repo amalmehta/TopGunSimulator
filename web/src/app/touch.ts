@@ -16,17 +16,20 @@ export function stickAxes(dx: number, dy: number, radius: number, deadZone = 0.0
 /** Pointer capture keeps a drag on its control even if the finger slides off; it can throw for stale pointers. */
 function capture(el: HTMLElement, id: number) { try { capture(el, id) } catch { /* drag still works without capture */ } }
 
-export interface TouchState { active: boolean; pitch: number; roll: number; yaw: number; throttle: number | null; brakes: boolean; trigger: boolean }
+export interface TouchState { active: boolean; stickHeld: boolean; pitch: number; roll: number; yaw: number; throttle: number | null; brakes: boolean; trigger: boolean }
 
 export class TouchControls {
-  state: TouchState = { active: false, pitch: 0, roll: 0, yaw: 0, throttle: null, brakes: false, trigger: false }
+  state: TouchState = { active: false, stickHeld: false, pitch: 0, roll: 0, yaw: 0, throttle: null, brakes: false, trigger: false }
   onAction: ((a: FlightAction) => void) | null = null
+  /** Tapped the Level button (re-centre tilt, or ask for motion permission first). */
+  onLevel: (() => void) | null = null
   readonly root: HTMLDivElement
   private knob: HTMLDivElement
   private throttleFill: HTMLDivElement
   private throttleLabel: HTMLSpanElement
   private gunBtn: HTMLButtonElement
   private gearBtn: HTMLButtonElement
+  private levelBtn: HTMLButtonElement
 
   constructor(parent: HTMLElement) {
     this.root = document.createElement('div')
@@ -47,13 +50,15 @@ export class TouchControls {
         </div>
         <div class="tc-throttle" aria-label="Throttle"><div class="tc-fill"></div><span>0%</span></div>
       </div>
-      <div class="tc-rudder" aria-label="Rudder"><button data-yaw="-1">◀ Rudder</button><button data-yaw="1">Rudder ▶</button></div>`
+      <div class="tc-rudder" aria-label="Rudder"><button data-yaw="-1">◀ Rudder</button><button data-yaw="1">Rudder ▶</button><button class="tc-level" hidden aria-label="Level: make this the neutral tilt">Level</button></div>`
     parent.appendChild(this.root)
     this.knob = this.root.querySelector('.tc-knob')!
     this.throttleFill = this.root.querySelector('.tc-fill')!
     this.throttleLabel = this.root.querySelector('.tc-throttle span')!
     this.gunBtn = this.root.querySelector('.tc-gun')!
     this.gearBtn = this.root.querySelector('.tc-gear')!
+    this.levelBtn = this.root.querySelector('.tc-level')!
+    this.levelBtn.addEventListener('pointerdown', e => { e.preventDefault(); this.onLevel?.() })
     this.bindStick(this.root.querySelector('.tc-stick')!)
     this.bindThrottle(this.root.querySelector('.tc-throttle')!)
     this.bindButtons()
@@ -67,6 +72,18 @@ export class TouchControls {
     if (!on) this.reset()
   }
 
+  /** Shows the Level button while tilt-to-fly is on; `label` reads "Enable tilt" until motion data arrives. */
+  showTilt(on: boolean, label = 'Level') {
+    this.levelBtn.hidden = !on
+    this.levelBtn.textContent = label
+  }
+
+  /** With tilt flying, the knob mirrors the tilt so you can see your input. */
+  mirrorTilt(roll: number, pitch: number, radius: number) {
+    if (this.state.stickHeld) return
+    this.knob.style.transform = roll || pitch ? `translate(${roll * radius}px, ${pitch * radius}px)` : ''
+  }
+
   /** Mirrors the current throttle (from keyboard or a restart) onto the slider. */
   syncThrottle(t: number) {
     this.throttleFill.style.height = `${t * 100}%`
@@ -74,7 +91,7 @@ export class TouchControls {
   }
 
   reset() {
-    Object.assign(this.state, { pitch: 0, roll: 0, yaw: 0, throttle: null, brakes: false, trigger: false })
+    Object.assign(this.state, { stickHeld: false, pitch: 0, roll: 0, yaw: 0, throttle: null, brakes: false, trigger: false })
     this.knob.style.transform = ''
   }
 
@@ -91,11 +108,12 @@ export class TouchControls {
       this.state.pitch = a.pitch
       this.state.roll = a.roll
     }
-    el.addEventListener('pointerdown', e => { id = e.pointerId; capture(el, id); move(e); e.preventDefault() })
+    el.addEventListener('pointerdown', e => { id = e.pointerId; capture(el, id); this.state.stickHeld = true; move(e); e.preventDefault() })
     el.addEventListener('pointermove', e => { if (e.pointerId === id) move(e) })
     const release = (e: PointerEvent) => {
       if (e.pointerId !== id) return
       id = null
+      this.state.stickHeld = false
       this.state.pitch = 0; this.state.roll = 0
       this.knob.style.transform = ''
     }
@@ -157,3 +175,12 @@ const TOUCH_TEXT: [RegExp, string][] = [
   [/keep it straight with Q\/E/g, 'keep it straight with the Rudder buttons'],
 ]
 export const touchText = (s: string) => TOUCH_TEXT.reduce((acc, [re, to]) => acc.replace(re, to), s)
+
+const TILT_TEXT: [RegExp, string][] = [
+  [/\(drag the stick down\)/g, '(tilt the top toward you)'],
+  [/\(push the stick up\)/g, '(tilt the top away)'],
+  [/\(stick left\)/g, '(tilt left)'],
+  [/\(stick right\)/g, '(tilt right)'],
+]
+/** Like touchText, for flying by tilting the device. */
+export const tiltText = (s: string) => TILT_TEXT.reduce((acc, [re, to]) => acc.replace(re, to), touchText(s))

@@ -12,7 +12,8 @@ import { drawInstruments, drawControls } from './app/instruments'
 import { drawMap, drawProfile } from './app/maps'
 import type { Frame } from './app/frame'
 import { icons } from './app/icons'
-import { TouchControls, touchText } from './app/touch'
+import { TouchControls, touchText, tiltText } from './app/touch'
+import { TiltControl } from './app/tilt'
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!))
@@ -38,6 +39,9 @@ let publishTimer = 0
 let mapScale = 30
 let raf = 0
 const touch = new TouchControls($('viewport'))
+const tilt = new TiltControl()
+tilt.setEnabled(settings.get().tiltToFly)
+const tiltFlying = () => tilt.enabled && tilt.receiving
 const coarse = matchMedia('(pointer: coarse)')
 /** On phones the panels start hidden so the 3D view has room: landscape hides both,
  *  portrait keeps the lesson sidebar (it sits below the view). Toggles change these for the flight only. */
@@ -126,6 +130,7 @@ function start(m: SessionMode) {
   compact = compactDefaults()
   compactPortrait = portrait()
   touch.reset()
+  tilt.recenter()
   touch.syncThrottle(input.throttle)
   applyLayout()
   input.start()
@@ -167,7 +172,8 @@ function tick(now: number) {
   lastTick = now
   s.paused = paused || result !== null
   if (!s.paused) {
-    s.input = input.sample(dt, settings.get(), touch.state)
+    s.input = input.sample(dt, settings.get(), touch.state, tilt)
+    if (tiltFlying()) touch.mirrorTilt(tilt.roll, tilt.pitch, touchStickRadius())
     s.advance(dt)
   }
   for (const e of s.drainEvents()) handleEvent(e)
@@ -223,6 +229,7 @@ function publish() {
     touchdown: s.player.lastTouchdown,
   }
   touch.syncThrottle(s.input.throttle)
+  if (settings.get().tiltToFly) updateTiltButton()
   if (showInstruments()) {
     drawInstruments(gaugeCanvases, frame.telemetry, s.player.spec)
     drawControls($<HTMLCanvasElement>('controls-canvas'), frame.telemetry)
@@ -358,11 +365,12 @@ function applyLayout() {
   const t = touchActive() && session !== null
   document.body.classList.toggle('touch-mode', t)
   touch.show(t, session?.player.spec.isJet ?? false, session?.player.spec.hasRetractableGear ?? false)
+  updateTiltButton()
   updateToolbar()
 }
 
 /** Lesson and instructor text, with key hints rewritten when touch controls are on. */
-const say = (s: string) => esc(touch.state.active ? touchText(s) : s)
+const say = (s: string) => esc(tiltFlying() ? tiltText(s) : touch.state.active ? touchText(s) : s)
 
 /** Compact current-step banner for touch mode when the lesson sidebar is hidden. */
 function updateLessonStrip() {
@@ -378,6 +386,21 @@ function updateLessonStrip() {
   el.style.setProperty('--c', catVar(l.category))
   el.innerHTML = `<b>${frame.lessonStepIndex + 1}/${l.steps.length} · ${esc(step.title)}</b> ${say(step.instruction)}${frame.lessonProgressText ? `<span class="mono">${esc(frame.lessonProgressText)}</span>` : ''}`
 }
+
+/** Level button: re-centres tilt, or (iOS, after a reload) asks for motion permission first. */
+function updateTiltButton() {
+  touch.showTilt(settings.get().tiltToFly && touch.state.active, tilt.receiving ? 'Level' : 'Enable tilt')
+}
+touch.onLevel = async () => {
+  if (!tilt.receiving) {
+    if (!(await TiltControl.requestPermission())) { toast('Motion access was denied. Allow it in your browser settings to fly by tilting.', '#ff9f0a'); return }
+    tilt.setEnabled(true)
+    setTimeout(() => { updateTiltButton(); if (!tilt.receiving) toast('No motion sensor found on this device.', '#ff9f0a') }, 800)
+  }
+  tilt.recenter()
+  toast('Tilt levelled: this is now straight and level', '#4b9bff')
+}
+const touchStickRadius = () => ($('touch-controls').querySelector('.tc-stick')?.clientWidth ?? 120) / 2 * 0.9
 
 /** Height (px) the on-screen controls take at the bottom of the 3D view. */
 function touchInset() { return Math.min(180, $('viewport').clientHeight * 0.38) }
@@ -465,6 +488,8 @@ function openSettings(tab: Tab = 'Flying') {
   const body: Record<Tab, string> = {
     Flying: check('autoRudder', 'Auto-rudder (keeps turns coordinated and the takeoff roll straight)') + check('invertPitch', 'Invert pitch (W / ↑ pulls the nose up)') +
       range('stickSensitivity', 'Stick sensitivity', 0.4, 1.5, 0.1, units.stickSensitivity!) + range('keyboardCentering', 'Keyboard re-centering', 0.3, 2, 0.1, units.keyboardCentering!) +
+      `<label class="field"><span>Tilt to fly (phones and tablets): tilt the device to pitch and roll</span><input type="checkbox" id="tilt-toggle" ${s.tiltToFly ? 'checked' : ''} ${TiltControl.supported ? '' : 'disabled'}></label>` +
+      `<p class="muted" style="font-weight:400;margin-top:-6px" id="tilt-note">${TiltControl.supported ? 'Hold the device the way you like, then tap Level in flight to make that straight and level. Touching the on-screen stick overrides tilt.' : 'This device or browser has no motion sensor.'}</p>` +
       `<label class="field"><span>Touch controls</span><select data-k="touchControls">${(['auto', 'on', 'off'] as const).map(v =>
         `<option value="${v}" ${s.touchControls === v ? 'selected' : ''}>${{ auto: 'Automatic (touch screens)', on: 'Always on', off: 'Off' }[v]}</option>`).join('')}</select></label>` +
       '<p class="muted" style="font-weight:400">A game controller works too: left stick flies, right stick is rudder, triggers set the throttle, A fires.</p>',
@@ -492,6 +517,15 @@ function openSettings(tab: Tab = 'Flying') {
       settings.set(k, v as never)
     }
   })
+  const tiltToggle = d.querySelector<HTMLInputElement>('#tilt-toggle')
+  if (tiltToggle) tiltToggle.onchange = async () => {
+    if (tiltToggle.checked && !(await TiltControl.requestPermission())) {
+      tiltToggle.checked = false
+      d.querySelector('#tilt-note')!.textContent = 'Motion access was denied. Allow motion and orientation access for this site in your browser settings, then try again.'
+      return
+    }
+    settings.set('tiltToFly', tiltToggle.checked)
+  }
   const reset = d.querySelector<HTMLButtonElement>('#reset-progress')
   if (reset) reset.onclick = () => { if (confirm('Clear all passed lessons?')) { lessonRecord.reset(); if (!session) renderHome() } }
   $('settings-done').onclick = () => d.close()
@@ -552,6 +586,7 @@ window.addEventListener('keydown', e => {
 })
 settings.onChange(() => {
   const s = settings.get()
+  if (tilt.enabled !== s.tiltToFly) { tilt.setEnabled(s.tiltToFly); if (s.tiltToFly) tilt.recenter() }
   if (session) { session.player.autoRudder = s.autoRudder; session.banditAI.skill = s.banditSkill; applyLayout(); sidebarKey = '' }
 })
 

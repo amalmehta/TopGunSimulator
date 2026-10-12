@@ -52,11 +52,13 @@ web/                              The website (TypeScript + Three.js + Vite)
   src/app/maps.ts                 2D moving map and side profile
   src/app/input.ts                Keyboard and Gamepad API (merges touch input)
   src/app/touch.ts                On-screen stick, rudder, throttle and buttons for phones and tablets
+  src/app/tilt.ts                 Tilt-to-fly: motion sensor → stick, calibration, permission
   src/app/settings.ts             localStorage settings, lesson progress, unit formatting
   src/app/frame.ts, icons.ts      Per-frame snapshot type, canvas helper, SVG icons
   tests/golden.test.ts            Replays the Swift reference trajectories
   tests/core.test.ts              Ports of the key Swift tests
   tests/touch.test.ts             Touch stick maths, input merging and touch wording
+  tests/tilt.test.ts              Tilt maths and tilt input merging
   tests/fixtures/golden.json      Reference trajectories exported from Swift
 
 .github/workflows/pages.yml       Test, build and deploy the website to GitHub Pages

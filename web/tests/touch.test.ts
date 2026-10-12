@@ -25,7 +25,7 @@ describe('touch stick', () => {
 describe('input merges touch', () => {
   it('touch stick, rudder, throttle, brakes and guns reach the pilot input', () => {
     const im = new InputManager()
-    const touch = { active: true, pitch: 0.5, roll: -0.25, yaw: 1, throttle: 0.8, brakes: true, trigger: true }
+    const touch = { active: true, stickHeld: true, pitch: 0.5, roll: -0.25, yaw: 1, throttle: 0.8, brakes: true, trigger: true }
     const i = im.sample(1 / 60, DEFAULTS, touch)
     expect(i.pitch).toBeCloseTo(0.5)
     expect(i.roll).toBeCloseTo(-0.25)
@@ -37,7 +37,7 @@ describe('input merges touch', () => {
     expect(im.sample(1 / 60, DEFAULTS, { ...touch, throttle: null }).throttle).toBeCloseTo(0.8)
   })
   it('inactive touch state is ignored', () => {
-    const i = new InputManager().sample(1 / 60, DEFAULTS, { active: false, pitch: 1, roll: 1, yaw: 1, throttle: 1, brakes: true, trigger: true })
+    const i = new InputManager().sample(1 / 60, DEFAULTS, { active: false, stickHeld: false, pitch: 1, roll: 1, yaw: 1, throttle: 1, brakes: true, trigger: true })
     expect(i.pitch).toBe(0); expect(i.throttle).toBe(0); expect(i.trigger).toBe(false)
   })
 })
