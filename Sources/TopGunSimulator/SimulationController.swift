@@ -69,6 +69,8 @@ final class SimulationController: ObservableObject {
         session = s
         self.mode = mode
         input.throttle = s.input.throttle
+        input.onScreen = OnScreenControls()
+        input.onScreen.active = settings.onScreenControls
         world.load(session: s)
         result = nil
         crashed = nil
@@ -109,6 +111,10 @@ final class SimulationController: ObservableObject {
         session?.player.autoRudder = settings.autoRudder
         session?.wind = settings.wind
         session?.banditAI.skill = settings.banditSkill
+        if input.onScreen.active != settings.onScreenControls {
+            input.onScreen = OnScreenControls()
+            input.onScreen.active = settings.onScreenControls
+        }
     }
 
     // MARK: Frame loop
@@ -193,6 +199,10 @@ final class SimulationController: ObservableObject {
     }
 
     func handle(_ action: FlightAction) {
+        if action == .toggleOnScreenControls {   // works from the home screen too
+            UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: SettingsKey.onScreenControls), forKey: SettingsKey.onScreenControls)
+            return
+        }
         guard session != nil else { return }
         switch action {
         case .flapsDown: session?.setFlaps(step: 1); announceFlaps()
@@ -208,6 +218,7 @@ final class SimulationController: ObservableObject {
         case .toggleHelp: showHelp.toggle()
         case .toggleSidebar: UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: SettingsKey.showSidebar), forKey: SettingsKey.showSidebar)
         case .toggleInstruments: UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: SettingsKey.showInstruments), forKey: SettingsKey.showInstruments)
+        case .toggleOnScreenControls: break
         case .endFlight: end()
         case .restart: restart()
         }

@@ -53,6 +53,7 @@ flowchart TB
 | `WorldScene` / `AircraftModels` | Builds the terrain mesh (vertex-coloured), runway with markings, lights and live PAPI, buildings, trees and gates. Aircraft are built from primitives with hinged ailerons, elevator, rudder and flaps that deflect, plus prop and afterburner. Runs chase, cockpit, orbit and tower cameras, tracers and explosions. |
 | HUD / instruments / sidebar | Canvas-drawn HUD (pitch ladder and flight-path marker in the cockpit), six-pack, stick-vs-surface readout, moving map, side profile with glidepath, lesson and instructor panels. |
 | Settings / Feedback | Settings window (⌘,) backed by `UserDefaults`; feedback appended to a local JSON-lines file. |
+| `OnScreenControls` / `OnScreenControlsView` | Optional mouse/trackpad stick, rudder, throttle and buttons over the 3D view (mirrors the web touch controls). The stick mapping and the merge into `PilotInput` live in `FlightCore` and are unit-tested; the SwiftUI view only sets that state from drag gestures. |
 
 ## Main flows
 
@@ -79,7 +80,7 @@ flowchart TB
 
 ## Testing
 
-`swift test` runs 26 XCTest cases (plus an opt-in golden export) in `Tests/FlightCoreTests`: ISA values, terrain shape, Euler round-trip, hands-off trim stability (both aircraft), control response directions, the lift curve and stall, stall and recovery, takeoff distance and tracking, sitting still on the runway, fighter takeoff and gear, the g-limiter, gentle vs. hard landings, gate crossing, gun cone, bandit merge, instructor priorities, every lesson starting cleanly, steps not advancing early, the flat approach corridor, and scripted pilots passing the Controls and Takeoff lessons. On the web, `npm --prefix web test` runs 37 Vitest cases (golden trajectory replays, ports of the key Swift tests, touch stick/input/wording tests, and tilt maths: neutral, directions, range setting, dead zone, iOS sign, landscape, stick override), and the site was checked in a browser at desktop and phone sizes. The Mac app was checked by launching it with `--start` flags and capturing window screenshots (`scripts/screenshot.sh`).
+`swift test` runs 30 XCTest cases (plus an opt-in golden export) in `Tests/FlightCoreTests`: ISA values, terrain shape, Euler round-trip, hands-off trim stability (both aircraft), control response directions, the lift curve and stall, stall and recovery, takeoff distance and tracking, sitting still on the runway, fighter takeoff and gear, the g-limiter, gentle vs. hard landings, gate crossing, gun cone, bandit merge, instructor priorities, every lesson starting cleanly, steps not advancing early, the flat approach corridor, scripted pilots passing the Controls and Takeoff lessons, and the on-screen controls (stick mapping, dead zone, input merge, throttle handover). On the web, `npm --prefix web test` runs 37 Vitest cases (golden trajectory replays, ports of the key Swift tests, touch stick/input/wording tests, and tilt maths: neutral, directions, range setting, dead zone, iOS sign, landscape, stick override), and the site was checked in a browser at desktop and phone sizes. The Mac app was checked by launching it with `--start` flags and capturing window screenshots (`scripts/screenshot.sh`).
 
 ## Web version
 

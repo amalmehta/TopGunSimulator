@@ -85,12 +85,14 @@ Website, decided without asking:
 - The physics port is verified against golden trajectories exported from the Swift model.
 - Touch controls (added 2026-10-11, user chose on-screen stick + throttle): virtual stick, rudder, throttle and buttons, auto-on for touch screens with a Settings override; compact phone layout with a lesson strip; key hints reworded for touch.
 - Tilt-to-fly (added 2026-10-11, requested as a Settings option): off by default; gravity-vector based; neutral captured at flight start or with a Level button; on-screen stick overrides; iOS permission asked from the toggle or an in-flight Enable tilt button. Tilt for full stick slider (10–60°, default 30°, 5° steps).
+- Mac on-screen controls (added 2026-10-11, user chose mouse/trackpad widgets over an iOS build or trackpad gestures): same layout as web touch controls; off by default; Settings, toolbar, Flight menu or K to toggle.
 - `?start=` / `?camera=` URL parameters mirror the Mac launch flags.
 - Settings shortcut ⌘, (Ctrl+, elsewhere) plus a gear button.
 
 CHANGELOG:
 
 - 2026-10-11 — created
+- 2026-10-11 — added on-screen controls (mouse/trackpad) to the Mac app
 - 2026-10-11 — added a tilt range slider to Settings (web)
 - 2026-10-11 — added tilt-to-fly as a Settings option (web)
 - 2026-10-11 — added touch controls for phones and tablets (web)

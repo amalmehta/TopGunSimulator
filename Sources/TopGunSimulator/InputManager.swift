@@ -4,7 +4,7 @@ import FlightCore
 
 /// Discrete actions triggered by a key press.
 enum FlightAction {
-    case flapsUp, flapsDown, toggleGear, trimUp, trimDown, nextCamera, togglePause, toggleHelp, toggleSidebar, toggleInstruments, endFlight, restart
+    case flapsUp, flapsDown, toggleGear, trimUp, trimDown, nextCamera, togglePause, toggleHelp, toggleSidebar, toggleInstruments, toggleOnScreenControls, endFlight, restart
 }
 
 /// Turns keyboard and game-controller state into smooth stick, rudder and throttle inputs.
@@ -16,6 +16,8 @@ final class InputManager {
     // Smoothed keyboard axes
     private var kbPitch = 0.0, kbRoll = 0.0, kbYaw = 0.0
     var throttle = 0.0
+    /// On-screen stick/rudder/throttle (mouse or trackpad), merged over keyboard and gamepad.
+    var onScreen = OnScreenControls()
 
     enum Key {
         static let a: UInt16 = 0, s: UInt16 = 1, d: UInt16 = 2, f: UInt16 = 3, h: UInt16 = 4, g: UInt16 = 5
@@ -23,12 +25,12 @@ final class InputManager {
         static let rightBracket: UInt16 = 30, leftBracket: UInt16 = 33, i: UInt16 = 34, p: UInt16 = 35
         static let comma: UInt16 = 43, m: UInt16 = 46, period: UInt16 = 47, space: UInt16 = 49, escape: UInt16 = 53
         static let left: UInt16 = 123, right: UInt16 = 124, down: UInt16 = 125, up: UInt16 = 126
-        static let backslash: UInt16 = 42
+        static let backslash: UInt16 = 42, k: UInt16 = 40
     }
 
     static let flightKeys: Set<UInt16> = [Key.a, Key.s, Key.d, Key.f, Key.h, Key.g, Key.c, Key.b, Key.q, Key.w, Key.e, Key.r,
                                           Key.rightBracket, Key.leftBracket, Key.i, Key.p, Key.comma, Key.m, Key.period,
-                                          Key.space, Key.escape, Key.left, Key.right, Key.down, Key.up, Key.backslash]
+                                          Key.space, Key.escape, Key.left, Key.right, Key.down, Key.up, Key.backslash, Key.k]
 
     func start() {
         guard monitor == nil else { return }
@@ -68,6 +70,7 @@ final class InputManager {
         case Key.i: onAction?(.toggleInstruments)
         case Key.escape: onAction?(.endFlight)
         case Key.backslash: onAction?(.restart)
+        case Key.k: onAction?(.toggleOnScreenControls)
         default: break
         }
     }
@@ -111,6 +114,9 @@ final class InputManager {
             if pad.buttonA.isPressed { input.trigger = true }
             if pad.buttonB.isPressed { input.brakes = 1 }
         }
+
+        onScreen.apply(to: &input, throttle: &throttle, sensitivity: sensitivity)
+        input.throttle = throttle
 
         if settings.invertPitch { input.pitch = -input.pitch }
         input.pitch = clamp(input.pitch, -1, 1)

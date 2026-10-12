@@ -37,6 +37,7 @@ struct FlightView: View {
     @AppStorage(SettingsKey.showHUD) private var showHUD = true
     @AppStorage(SettingsKey.showInstruments) private var showInstruments = true
     @AppStorage(SettingsKey.showSidebar) private var showSidebar = true
+    @AppStorage(SettingsKey.onScreenControls) private var onScreenControls = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -44,8 +45,12 @@ struct FlightView: View {
                 ZStack {
                     SceneViewRepresentable(sim: sim)
                     if showHUD {
-                        HUDView(frame: sim.frame, spec: sim.spec, camera: sim.camera, fov: sim.settings.fieldOfView)
+                        HUDView(frame: sim.frame, spec: sim.spec, camera: sim.camera, fov: sim.settings.fieldOfView,
+                                bottomInset: onScreenControls ? OnScreenControlsView.inset : 0)
                             .allowsHitTesting(false)
+                    }
+                    if onScreenControls {
+                        OnScreenControlsView(telemetry: sim.frame.telemetry, spec: sim.spec)
                     }
                     ToastStack(toasts: sim.toasts)
                     overlays
@@ -111,6 +116,8 @@ struct FlightView: View {
                 .help("Instrument panel (I)")
             Toggle(isOn: $showSidebar) { Label("Map & Lesson", systemImage: "sidebar.right") }
                 .help("Map, profile and lesson sidebar (M)")
+            Toggle(isOn: $onScreenControls) { Label("On-screen Controls", systemImage: "hand.point.up.left") }
+                .help("On-screen stick, rudder, throttle and buttons for mouse or trackpad (K)")
             Button { sim.showHelp = true } label: { Label("Controls", systemImage: "keyboard") }
                 .help("Keyboard controls (H)")
             SettingsLink { Label("Settings", systemImage: "gearshape") }

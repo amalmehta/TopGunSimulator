@@ -8,6 +8,8 @@ struct HUDView: View {
     let spec: AircraftSpec
     let camera: CameraMode
     let fov: Double
+    /// Height taken by on-screen controls at the bottom; the HUD keeps its readouts clear of it.
+    var bottomInset: CGFloat = 0
     @AppStorage(SettingsKey.metricUnits) private var metric = false
     @AppStorage(SettingsKey.instructorLevel) private var instructorLevel = InstructorLevel.explain.rawValue
 
@@ -20,7 +22,7 @@ struct HUDView: View {
                 VStack {
                     Spacer()
                     warningBanner
-                        .padding(.bottom, 28)
+                        .padding(.bottom, 28 + bottomInset)
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
@@ -116,7 +118,7 @@ struct HUDView: View {
         text(String(format: "%03d°", Int(t.headingDeg.rounded()) % 360), CGPoint(x: c.x, y: tapeY + 40), size: 15)
 
         // Speed (left) and altitude (right) boxes
-        let boxY = c.y
+        let boxY = bottomInset > 0 ? max(90, (size.height - bottomInset) / 2) : c.y
         let leftX = c.x - min(size.width * 0.32, 340), rightX = c.x + min(size.width * 0.32, 340)
         for (x, value, label) in [(leftX, fmt.speed(t.airspeedKt), "IAS"), (rightX, fmt.altitude(t.altitudeFt), "ALT")] {
             let r = CGRect(x: x - 58, y: boxY - 16, width: 116, height: 32)
@@ -138,8 +140,9 @@ struct HUDView: View {
             text("SPEED", CGPoint(x: leftX, y: boxY - 48), color: HUDColor.warning, size: 13)
         }
 
-        // Systems strip (bottom left)
-        let sysY = size.height - 70
+        // Systems strip: bottom-left normally, top-left (beside the heading tape) with on-screen controls.
+        let sysY = bottomInset > 0 ? 14 : size.height - 70
+        let rowStep: CGFloat = bottomInset > 0 ? 16 : -20
         var sys = "THR \(Int(t.throttle * 100))%"
         if t.afterburner { sys += " AB" }
         sys += "   FLAPS \(Int(t.flapsDeg.rounded()))°"
@@ -152,9 +155,9 @@ struct HUDView: View {
         if spec.isJet && frame.banditPosition != nil {
             let pip = Path(ellipseIn: CGRect(x: c.x - 18, y: c.y - 18, width: 36, height: 36))
             stroke(pip, width: 1.2)
-            text("GUN \(frame.ammo)", CGPoint(x: 18, y: sysY - 20), anchor: .leading, size: 12)
+            text("GUN \(frame.ammo)", CGPoint(x: 18, y: sysY + rowStep), anchor: .leading, size: 12)
             if let d = frame.banditDistance {
-                text(String(format: "BANDIT %.1f nm  %d%%", d / 1852, Int(frame.banditHealth)), CGPoint(x: 18, y: sysY - 40), anchor: .leading, color: HUDColor.bandit, size: 12)
+                text(String(format: "BANDIT %.1f nm  %d%%", d / 1852, Int(frame.banditHealth)), CGPoint(x: 18, y: sysY + rowStep * 2), anchor: .leading, color: HUDColor.bandit, size: 12)
             }
             if let p = frame.banditScreen, CGRect(origin: .zero, size: size).insetBy(dx: 20, dy: 20).contains(p) {
                 let box = Path(CGRect(x: p.x - 16, y: p.y - 16, width: 32, height: 32))

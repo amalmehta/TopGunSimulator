@@ -18,6 +18,7 @@ enum SettingsKey {
     static let windFromDeg = "windFromDeg"
     static let turbulence = "turbulence"
     static let banditSkill = "banditSkill"
+    static let onScreenControls = "onScreenControls"
     static let completedLessons = "completedLessons"
 }
 
@@ -45,6 +46,7 @@ struct SimSettings {
     var windFromDeg: Double
     var turbulence: Double
     var banditSkill: Double
+    var onScreenControls: Bool
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -62,6 +64,7 @@ struct SimSettings {
             SettingsKey.windFromDeg: 360.0,
             SettingsKey.turbulence: 0.0,
             SettingsKey.banditSkill: 0.6,
+            SettingsKey.onScreenControls: false,
         ])
     }
 
@@ -78,7 +81,8 @@ struct SimSettings {
             windSpeedKt: d.double(forKey: SettingsKey.windSpeedKt),
             windFromDeg: d.double(forKey: SettingsKey.windFromDeg),
             turbulence: d.double(forKey: SettingsKey.turbulence),
-            banditSkill: d.double(forKey: SettingsKey.banditSkill))
+            banditSkill: d.double(forKey: SettingsKey.banditSkill),
+            onScreenControls: d.bool(forKey: SettingsKey.onScreenControls))
     }
 
     var wind: WindModel {

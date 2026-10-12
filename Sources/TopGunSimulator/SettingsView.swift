@@ -19,6 +19,7 @@ private struct FlyingSettings: View {
     @AppStorage(SettingsKey.invertPitch) private var invertPitch = false
     @AppStorage(SettingsKey.stickSensitivity) private var sensitivity = 1.0
     @AppStorage(SettingsKey.keyboardCentering) private var centering = 1.0
+    @AppStorage(SettingsKey.onScreenControls) private var onScreenControls = false
 
     var body: some View {
         Form {
@@ -30,6 +31,7 @@ private struct FlyingSettings: View {
             LabeledContent("Keyboard re-centering") {
                 Slider(value: $centering, in: 0.3...2.0) { EmptyView() } minimumValueLabel: { Text("Slow") } maximumValueLabel: { Text("Snappy") }
             }
+            Toggle("On-screen controls (fly with the mouse or trackpad: stick, rudder, throttle and buttons)", isOn: $onScreenControls)
             Text("A game controller works too: left stick flies, right stick is rudder, triggers set the throttle, A fires.")
                 .font(.callout).foregroundStyle(.secondary)
         }
@@ -128,6 +130,7 @@ struct ControlsHelpView: View {
         ("C", "Next camera; drag the view to orbit, scroll to zoom"),
         ("P", "Pause"),
         ("I / M", "Toggle instruments / map sidebar"),
+        ("K", "Toggle on-screen controls (mouse / trackpad)"),
         ("\\", "Restart"),
         ("Esc", "End flight"),
         ("H", "This help"),

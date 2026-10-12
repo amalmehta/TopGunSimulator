@@ -15,6 +15,7 @@ Sources/FlightCore/               Pure simulation, no UI
   Instructor.swift                Live hints with "why" explanations
   Lessons.swift                   Lesson model, progress tracking and the 11-lesson catalog
   Session.swift                   FlightSession, canyon gates, bandit AI, guns, events
+  OnScreenControls.swift          On-screen stick mapping and merge into the pilot input
 
 Sources/TopGunSimulator/          The Mac app
   TopGunSimulatorApp.swift        App entry, menus, Settings scene, launch flags
@@ -24,6 +25,7 @@ Sources/TopGunSimulator/          The Mac app
   AircraftModels.swift            3D trainer and fighter with moving control surfaces
   FlightView.swift                Flight screen layout, toolbar, result and pause overlays
   HUDView.swift                   Head-up display
+  OnScreenControlsView.swift      Mouse/trackpad stick, rudder, throttle and buttons
   InstrumentPanel.swift           Six-pack gauges and controls readout
   SidebarView.swift               Lesson, free-flight and instructor panels
   MapViews.swift                  2D moving map and side profile
@@ -36,6 +38,7 @@ Sources/TopGunSimulator/          The Mac app
 Tests/FlightCoreTests/
   FlightModelTests.swift          Physics, session, lesson and AI tests
   GoldenExportTests.swift         Exports reference trajectories for the web port (opt-in)
+  OnScreenControlsTests.swift     On-screen controls: stick mapping and input merging
 
 web/                              The website (TypeScript + Three.js + Vite)
   index.html                      Page shell: home, flight screen, dialogs

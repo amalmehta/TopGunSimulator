@@ -38,7 +38,7 @@ Start straight into a flight (useful for demos):
 swift test
 ```
 
-26 tests cover the atmosphere, terrain, trim and stability, stalls, takeoff, landing and crash detection, the fighter's g-limiter, gates, guns, the bandit AI and lesson flow. Two of them have a scripted pilot fly whole lessons to a pass.
+30 tests (plus an opt-in golden export) cover the atmosphere, terrain, trim and stability, stalls, takeoff, landing and crash detection, the fighter's g-limiter, gates, guns, the bandit AI, lesson flow, and the on-screen controls' stick mapping and input merging. Two of them have a scripted pilot fly whole lessons to a pass.
 
 ## Web version
 
@@ -116,14 +116,28 @@ Passed lessons get a check mark on the home screen. Settings → Instructor rese
 | I / M | Toggle the instrument panel / sidebar |
 | \\ | Restart |
 | Esc | End flight |
+| K | On-screen controls on/off (mouse / trackpad) |
 | H | Controls help |
 | ⌘, | Settings |
 
 Game controller: left stick flies, right stick is rudder, triggers set the throttle, A fires, B brakes.
 
+## On-screen controls (mouse or trackpad)
+
+Prefer not to use the keyboard? Turn on **On-screen controls**: Settings → Flying, the hand button in the toolbar, Flight → Toggle On-screen Controls, or press **K**. They're the same as the website's touch controls:
+
+- **Stick** (bottom-left): click and drag. Drag down to pull back (nose up) and sideways to roll; it springs back to centre when you let go.
+- **Rudder** (above the stick): hold ◀ or ▶.
+- **Throttle** (bottom-right): click or drag; it stays where you leave it.
+- **Buttons:** Flaps ▲/▼, Trim ▲/▼, Gear (fighter), Cam, Brake (hold), Guns (fighter, hold).
+
+Keyboard and gamepad keep working alongside them. With them on, the HUD's speed and altitude boxes move up and its systems line moves to the top-left, so nothing overlaps.
+
+![On-screen controls in the Mac app](screenshots/mac-onscreen-controls.png)
+
 ## Settings (⌘, or the gear button)
 
-- **Flying:** auto-rudder, invert pitch, stick sensitivity, keyboard re-centering speed
+- **Flying:** auto-rudder, invert pitch, stick sensitivity, keyboard re-centering speed, on-screen controls
 - **Instructor:** off / hints / hints + why; reset lesson progress
 - **Display:** HUD, instrument panel, sidebar, aviation or metric units, field of view
 - **World:** wind speed and direction, turbulence, bandit skill
