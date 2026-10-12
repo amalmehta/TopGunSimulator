@@ -41,6 +41,7 @@ let raf = 0
 const touch = new TouchControls($('viewport'))
 const tilt = new TiltControl()
 tilt.setEnabled(settings.get().tiltToFly)
+tilt.rangeDeg = settings.get().tiltRangeDeg
 const tiltFlying = () => tilt.enabled && tilt.receiving
 const coarse = matchMedia('(pointer: coarse)')
 /** On phones the panels start hidden so the 3D view has room: landscape hides both,
@@ -484,12 +485,14 @@ function openSettings(tab: Tab = 'Flying') {
   const units: Partial<Record<keyof Settings, (v: number) => string>> = {
     stickSensitivity: v => v.toFixed(1) + '×', keyboardCentering: v => v.toFixed(1) + '×', fieldOfView: v => `${v}°`,
     windSpeedKt: v => `${v} kt`, windFromDeg: v => `${v}°`, turbulence: v => `${Math.round(v * 100)}%`, banditSkill: v => `${Math.round(v * 100)}%`,
+    tiltRangeDeg: v => `${v}°`,
   }
   const body: Record<Tab, string> = {
     Flying: check('autoRudder', 'Auto-rudder (keeps turns coordinated and the takeoff roll straight)') + check('invertPitch', 'Invert pitch (W / ↑ pulls the nose up)') +
       range('stickSensitivity', 'Stick sensitivity', 0.4, 1.5, 0.1, units.stickSensitivity!) + range('keyboardCentering', 'Keyboard re-centering', 0.3, 2, 0.1, units.keyboardCentering!) +
       `<label class="field"><span>Tilt to fly (phones and tablets): tilt the device to pitch and roll</span><input type="checkbox" id="tilt-toggle" ${s.tiltToFly ? 'checked' : ''} ${TiltControl.supported ? '' : 'disabled'}></label>` +
       `<p class="muted" style="font-weight:400;margin-top:-6px" id="tilt-note">${TiltControl.supported ? 'Hold the device the way you like, then tap Level in flight to make that straight and level. Touching the on-screen stick overrides tilt.' : 'This device or browser has no motion sensor.'}</p>` +
+      range('tiltRangeDeg', 'Tilt for full stick (smaller = more sensitive)', 10, 60, 5, units.tiltRangeDeg!) +
       `<label class="field"><span>Touch controls</span><select data-k="touchControls">${(['auto', 'on', 'off'] as const).map(v =>
         `<option value="${v}" ${s.touchControls === v ? 'selected' : ''}>${{ auto: 'Automatic (touch screens)', on: 'Always on', off: 'Off' }[v]}</option>`).join('')}</select></label>` +
       '<p class="muted" style="font-weight:400">A game controller works too: left stick flies, right stick is rudder, triggers set the throttle, A fires.</p>',
@@ -586,6 +589,7 @@ window.addEventListener('keydown', e => {
 })
 settings.onChange(() => {
   const s = settings.get()
+  tilt.rangeDeg = s.tiltRangeDeg
   if (tilt.enabled !== s.tiltToFly) { tilt.setEnabled(s.tiltToFly); if (s.tiltToFly) tilt.recenter() }
   if (session) { session.player.autoRudder = s.autoRudder; session.banditAI.skill = s.banditSkill; applyLayout(); sidebarKey = '' }
 })

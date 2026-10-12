@@ -58,7 +58,7 @@ That serves http://localhost:5173. Open a flight directly with `?start=<lesson i
 npm --prefix web test
 ```
 
-That runs 36 tests, including replays of reference trajectories exported from the Swift flight model, to prove both versions fly identically. To regenerate the references after changing the Swift physics:
+That runs 37 tests, including replays of reference trajectories exported from the Swift flight model, to prove both versions fly identically. To regenerate the references after changing the Swift physics:
 
 ```bash
 GOLDEN_OUT="$PWD/web/tests/fixtures/golden.json" swift test --filter GoldenExport
@@ -79,7 +79,7 @@ Web differences: settings and lesson progress live in the browser's localStorage
 
 ### Tilt to fly (optional)
 
-Settings → Flying → **Tilt to fly**. Tilt the top of the device toward you to pull up, away to push down, and tip it left or right to roll. About 30° from your neutral hold gives full stick.
+Settings → Flying → **Tilt to fly**. Tilt the top of the device toward you to pull up, away to push down, and tip it left or right to roll. By default 30° from your neutral hold gives full stick. Change it with **Tilt for full stick** (10–60°, in 5° steps); a smaller angle is more sensitive.
 
 - Your neutral hold is captured when the flight starts. Tap **Level** (next to the rudder buttons) any time to make the current hold straight and level.
 - iPhone and iPad ask for motion access when you switch it on. After a page reload, iOS needs one tap on **Enable tilt** to allow it again.

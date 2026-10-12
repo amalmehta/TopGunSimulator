@@ -29,6 +29,14 @@ describe('tilt maths', () => {
     expect(tiltAxes(reading(35, -15), 0, n).roll).toBeLessThan(-0.4)
     expect(tiltAxes(reading(35, TILT_RANGE_DEG + 10), 0, n).roll).toBe(1)
   })
+  it('the tilt range setting scales sensitivity', () => {
+    const tip = reading(35, 12)
+    const sharp = tiltAxes(tip, 0, n, 15).roll, default30 = tiltAxes(tip, 0, n).roll, gentle = tiltAxes(tip, 0, n, 60).roll
+    expect(sharp).toBeGreaterThan(default30)
+    expect(default30).toBeGreaterThan(gentle)
+    expect(tiltAxes(reading(35, 15), 0, n, 15).roll).toBeCloseTo(1, 5)       // full stick right at the chosen range
+    expect(tiltAxes(reading(35, 40), 0, n, 60).roll).toBeLessThan(1)
+  })
   it('small wobbles inside the dead zone do nothing', () => {
     expect(tiltAxes(reading(36, 1), 0, n)).toEqual({ roll: 0, pitch: 0 })
   })

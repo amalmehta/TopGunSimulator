@@ -22,12 +22,13 @@ export interface Settings {
   banditSkill: number
   touchControls: TouchMode
   tiltToFly: boolean
+  tiltRangeDeg: number
 }
 
 export const DEFAULTS: Settings = {
   autoRudder: true, invertPitch: false, stickSensitivity: 1, keyboardCentering: 1, instructorLevel: 'explain',
   showHUD: true, showInstruments: true, showSidebar: true, metricUnits: false, fieldOfView: 65,
-  windSpeedKt: 0, windFromDeg: 360, turbulence: 0, banditSkill: 0.6, touchControls: 'auto', tiltToFly: false,
+  windSpeedKt: 0, windFromDeg: 360, turbulence: 0, banditSkill: 0.6, touchControls: 'auto', tiltToFly: false, tiltRangeDeg: 30,
 }
 
 const KEY = 'topgun.settings', LESSONS_KEY = 'topgun.completedLessons'

@@ -6,7 +6,7 @@ export interface Gravity { x: number; y: number; z: number }
 export interface TiltNeutral { roll: number; pitch: number; sign: number }
 
 const DEG = Math.PI / 180
-/** Full stick at this much tilt from neutral. */
+/** Default tilt from neutral that gives full stick (Settings → Flying → Tilt for full stick). */
 export const TILT_RANGE_DEG = 30
 const DEAD_DEG = 2
 
@@ -34,7 +34,7 @@ export function calibrate(g: Gravity, angle: number): TiltNeutral {
 }
 
 /** Stick axes in -1...1 from tilt relative to neutral, with a small dead zone. */
-export function tiltAxes(g: Gravity, angle: number, n: TiltNeutral) {
+export function tiltAxes(g: Gravity, angle: number, n: TiltNeutral, rangeDeg = TILT_RANGE_DEG) {
   const a = rawAngles(g, angle, n.sign)
   let dPitch = a.pitch - n.pitch
   if (dPitch > Math.PI) dPitch -= 2 * Math.PI
@@ -42,7 +42,7 @@ export function tiltAxes(g: Gravity, angle: number, n: TiltNeutral) {
   const shape = (rad: number) => {
     const d = rad / DEG
     if (Math.abs(d) < DEAD_DEG) return 0
-    return Math.max(-1, Math.min(1, (Math.sign(d) * (Math.abs(d) - DEAD_DEG)) / (TILT_RANGE_DEG - DEAD_DEG)))
+    return Math.max(-1, Math.min(1, (Math.sign(d) * (Math.abs(d) - DEAD_DEG)) / (Math.max(rangeDeg, DEAD_DEG + 1) - DEAD_DEG)))
   }
   return { roll: shape(a.roll - n.roll), pitch: shape(dPitch) }
 }
@@ -56,6 +56,8 @@ export class TiltControl {
   pitch = 0
   /** True once motion events with gravity have actually arrived. */
   receiving = false
+  /** Degrees of tilt for full stick. */
+  rangeDeg = TILT_RANGE_DEG
   private neutral: TiltNeutral | null = null
   private last: Gravity | null = null
   private listening = false
@@ -83,7 +85,7 @@ export class TiltControl {
     this.last = { x: g.x, y: g.y, z: g.z }
     this.receiving = true
     if (!this.neutral) this.neutral = calibrate(this.last, this.angle())
-    const a = tiltAxes(this.last, this.angle(), this.neutral)
+    const a = tiltAxes(this.last, this.angle(), this.neutral, this.rangeDeg)
     this.roll = a.roll
     this.pitch = a.pitch
   }
