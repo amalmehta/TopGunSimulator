@@ -50,11 +50,13 @@ web/                              The website (TypeScript + Three.js + Vite)
   src/app/hud.ts                  Head-up display
   src/app/instruments.ts          Six-pack gauges and controls readout
   src/app/maps.ts                 2D moving map and side profile
-  src/app/input.ts                Keyboard and Gamepad API
+  src/app/input.ts                Keyboard and Gamepad API (merges touch input)
+  src/app/touch.ts                On-screen stick, rudder, throttle and buttons for phones and tablets
   src/app/settings.ts             localStorage settings, lesson progress, unit formatting
   src/app/frame.ts, icons.ts      Per-frame snapshot type, canvas helper, SVG icons
   tests/golden.test.ts            Replays the Swift reference trajectories
   tests/core.test.ts              Ports of the key Swift tests
+  tests/touch.test.ts             Touch stick maths, input merging and touch wording
   tests/fixtures/golden.json      Reference trajectories exported from Swift
 
 .github/workflows/pages.yml       Test, build and deploy the website to GitHub Pages

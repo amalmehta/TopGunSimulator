@@ -79,7 +79,7 @@ flowchart TB
 
 ## Testing
 
-`swift test` runs 26 XCTest cases (plus an opt-in golden export) in `Tests/FlightCoreTests`: ISA values, terrain shape, Euler round-trip, hands-off trim stability (both aircraft), control response directions, the lift curve and stall, stall and recovery, takeoff distance and tracking, sitting still on the runway, fighter takeoff and gear, the g-limiter, gentle vs. hard landings, gate crossing, gun cone, bandit merge, instructor priorities, every lesson starting cleanly, steps not advancing early, the flat approach corridor, and scripted pilots passing the Controls and Takeoff lessons. On the web, `npm --prefix web test` runs 20 Vitest cases (golden trajectory replays and ports of the key Swift tests), and the site was checked in a browser at desktop and phone sizes. The Mac app was checked by launching it with `--start` flags and capturing window screenshots (`scripts/screenshot.sh`).
+`swift test` runs 26 XCTest cases (plus an opt-in golden export) in `Tests/FlightCoreTests`: ISA values, terrain shape, Euler round-trip, hands-off trim stability (both aircraft), control response directions, the lift curve and stall, stall and recovery, takeoff distance and tracking, sitting still on the runway, fighter takeoff and gear, the g-limiter, gentle vs. hard landings, gate crossing, gun cone, bandit merge, instructor priorities, every lesson starting cleanly, steps not advancing early, the flat approach corridor, and scripted pilots passing the Controls and Takeoff lessons. On the web, `npm --prefix web test` runs 26 Vitest cases (golden trajectory replays, ports of the key Swift tests, and touch stick, input-merge and wording tests), and the site was checked in a browser at desktop and phone sizes. The Mac app was checked by launching it with `--start` flags and capturing window screenshots (`scripts/screenshot.sh`).
 
 ## Web version
 
@@ -106,7 +106,8 @@ flowchart LR
 - **UI without a framework:** plain DOM and template strings keep the bundle to Three.js plus about 60 kB of app code. The panels are Canvas 2D ports of the SwiftUI Canvas drawing.
 - **Data:** settings and passed lessons are in `localStorage` (wrapped in try/catch; the app still works when storage is blocked). Feedback opens a pre-filled GitHub issue on the repo, so no server is needed.
 - **Deploy:** `.github/workflows/pages.yml` runs `npm test` and `npm run build` with `PAGES_BASE=/TopGunSimulator/`, then publishes `web/dist` to Pages.
-- **Trade-offs:** two codebases must stay in sync (the golden test catches physics drift but not UI drift). Touch devices get no on-screen stick. The terrain mesh is generated on the main thread at startup, which takes about a second.
+- **Touch controls** (`src/app/touch.ts`): a virtual stick, rudder pedals, throttle slider and action buttons layered over the 3D view. Each control tracks its own pointer id, so stick and throttle work at the same time. Output is a `TouchState` that `InputManager.sample` merges with keyboard and gamepad input (touch wins while a finger is on it). They turn on automatically for coarse pointers (`touchControls: auto`). On phones a compact layout hides the instrument panel (and the sidebar in landscape) and adds a lesson strip. The HUD's readouts move up out of the controls' way, and `touchText()` rewrites key hints ("(S / ↓)" → "(drag the stick down)") in lesson and instructor text.
+- **Trade-offs:** two codebases must stay in sync (the golden test catches physics drift but not UI drift). The terrain mesh is generated on the main thread at startup, which takes about a second.
 
 ## Known limits
 
@@ -115,4 +116,4 @@ flowchart LR
 - The bandit is a single pursuit AI. It doesn't do energy tactics or defensive breaks.
 - The landing lesson is graded on touchdown sink rate and runway position, not on a full approach-stability score.
 - Startup takes a few seconds while the terrain mesh and map image are generated.
-- The web version has no touch flight controls; use a keyboard or game controller.
+- Touch controls are a virtual stick (no tilt-to-fly), and with a thumb they're less precise than a gamepad.

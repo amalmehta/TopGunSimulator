@@ -12,6 +12,7 @@ import { drawInstruments, drawControls } from './app/instruments'
 import { drawMap, drawProfile } from './app/maps'
 import type { Frame } from './app/frame'
 import { icons } from './app/icons'
+import { TouchControls, touchText } from './app/touch'
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!))
@@ -36,6 +37,22 @@ let lastTick = performance.now()
 let publishTimer = 0
 let mapScale = 30
 let raf = 0
+const touch = new TouchControls($('viewport'))
+const coarse = matchMedia('(pointer: coarse)')
+/** On phones the panels start hidden so the 3D view has room: landscape hides both,
+ *  portrait keeps the lesson sidebar (it sits below the view). Toggles change these for the flight only. */
+const portrait = () => window.innerHeight > window.innerWidth
+const compactDefaults = () => ({ instruments: false, sidebar: portrait() })
+let compact = compactDefaults()
+let compactPortrait = portrait()
+
+const touchActive = () => {
+  const m = settings.get().touchControls
+  return m === 'on' || (m === 'auto' && coarse.matches)
+}
+const isCompact = () => touchActive() && (window.innerHeight < 560 || window.innerWidth < 700)
+const showInstruments = () => (isCompact() ? compact.instruments : settings.get().showInstruments)
+const showSidebar = () => (isCompact() ? compact.sidebar : settings.get().showSidebar)
 
 const lessonOf = () => (mode?.kind === 'lesson' ? mode.lesson : null)
 
@@ -61,14 +78,13 @@ function renderHome() {
       <p>${k === 'trainer' ? `Forgiving high-wing trainer. Stalls at ~${s.vStallKt} kt, cruises at ${s.vCruiseKt} kt.` : 'Twin-engine fighter with fly-by-wire, afterburner and a 7.5 g limit.'}</p>
       <div class="row-btns"><button class="btn" data-free="${k}:ground">From the runway</button><button class="btn primary" data-free="${k}:air">In the air</button></div></div>`
   }
-  const touch = matchMedia('(pointer: coarse)').matches && !navigator.getGamepads?.().some(Boolean)
   $('home').innerHTML = `<div class="home-inner home">
     <div class="home-header">
       <img class="logo" src="./favicon.svg" alt="" />
       <div><h1>Top Gun Simulator</h1><p>Learn to fly in the trainer, then take the fighter through the canyon and into a dogfight.</p></div>
       <div class="score"><b>${LESSONS.filter(l => done.has(l.id)).length}/${LESSONS.length}</b><span>lessons passed</span></div>
     </div>
-    ${touch ? '<div class="notice">You fly with a keyboard or game controller. On a phone or tablet you can look around, but connect a keyboard or controller to fly.</div>' : ''}
+    ${touchActive() ? '<div class="notice">Touch controls are on: drag the stick on the left to fly, slide the throttle on the right. Turn the phone sideways for the best view.</div>' : ''}
     ${groups.map(g => `<h2>${g === 'Top Gun' ? 'Top Gun' : `Flight School · ${g}`}</h2>
       <div class="grid">${LESSONS.filter(l => categoryGroup(l.category) === g).map(card).join('')}</div>`).join('')}
     <h2>Free Flight</h2>
@@ -107,7 +123,11 @@ function start(m: SessionMode) {
   document.title = `${modeTitle(m)} · Top Gun Simulator`
   buildInstrumentPanel()
   applyLayout()
-  $('touch-hint').hidden = !(matchMedia('(pointer: coarse)').matches && !navigator.getGamepads?.().some(Boolean))
+  compact = compactDefaults()
+  compactPortrait = portrait()
+  touch.reset()
+  touch.syncThrottle(input.throttle)
+  applyLayout()
   input.start()
   lastTick = performance.now()
   cancelAnimationFrame(raf)
@@ -147,7 +167,7 @@ function tick(now: number) {
   lastTick = now
   s.paused = paused || result !== null
   if (!s.paused) {
-    s.input = input.sample(dt, settings.get())
+    s.input = input.sample(dt, settings.get(), touch.state)
     s.advance(dt)
   }
   for (const e of s.drainEvents()) handleEvent(e)
@@ -160,7 +180,7 @@ function tick(now: number) {
   if (publishTimer >= 1 / 30 || !frame) { publishTimer = 0; publish() }
   if (frame) {
     const vp = $('viewport')
-    if (set.showHUD) drawHUD($<HTMLCanvasElement>('hud'), frame, s.player.spec, camera, world.camera.fov)
+    if (set.showHUD) drawHUD($<HTMLCanvasElement>('hud'), frame, s.player.spec, camera, world.camera.fov, touch.state.active ? touchInset() : 0)
     else $<HTMLCanvasElement>('hud').getContext('2d')!.clearRect(0, 0, vp.clientWidth * 4, vp.clientHeight * 4)
   }
 }
@@ -202,18 +222,19 @@ function publish() {
     ammo: s.ammo,
     touchdown: s.player.lastTouchdown,
   }
-  const set = settings.get()
-  if (set.showInstruments) {
+  touch.syncThrottle(s.input.throttle)
+  if (showInstruments()) {
     drawInstruments(gaugeCanvases, frame.telemetry, s.player.spec)
     drawControls($<HTMLCanvasElement>('controls-canvas'), frame.telemetry)
     const t = frame.telemetry
     $('sys-line').textContent = `Flaps ${Math.round(t.flapsDeg)}°   Trim ${t.trim >= 0 ? '+' : ''}${Math.round(t.trim * 100)}${s.player.spec.hasRetractableGear ? (t.gearDown ? '   Gear ▼' : '   Gear ▲') : ''}`
   }
-  if (set.showSidebar) {
+  if (showSidebar()) {
     drawMap($<HTMLCanvasElement>('map'), frame, mapScale)
     drawProfile($<HTMLCanvasElement>('profile'), frame, lessonOf()?.category === 'Landing' || s.player.spec.kind === 'trainer')
     renderSidebar(false)
   }
+  updateLessonStrip()
 }
 
 // MARK: - Events and actions
@@ -258,13 +279,14 @@ function handleAction(a: FlightAction) {
     case 'nextCamera': camera = CAMERA_MODES[(CAMERA_MODES.indexOf(camera) + 1) % CAMERA_MODES.length]; updateToolbar(); break
     case 'togglePause': if (!result) { paused = !paused; renderOverlay(); updateToolbar() } break
     case 'toggleHelp': openHelp(); break
-    case 'toggleSidebar': settings.set('showSidebar', !settings.get().showSidebar); break
-    case 'toggleInstruments': settings.set('showInstruments', !settings.get().showInstruments); break
+    case 'toggleSidebar': if (isCompact()) { compact.sidebar = !compact.sidebar; applyLayout() } else settings.set('showSidebar', !settings.get().showSidebar); break
+    case 'toggleInstruments': if (isCompact()) { compact.instruments = !compact.instruments; applyLayout() } else settings.set('showInstruments', !settings.get().showInstruments); break
     case 'endFlight': end(); break
     case 'restart': restart(); break
   }
 }
 input.onAction = handleAction
+touch.onAction = handleAction
 
 function announceFlaps() {
   const s = session!
@@ -324,19 +346,41 @@ function updateToolbar() {
   })
   $('btn-pause').innerHTML = paused ? icons.play : icons.pause
   $('btn-pause').title = paused ? 'Resume (P)' : 'Pause (P)'
-  const s = settings.get()
-  $('btn-instruments').classList.toggle('on', s.showInstruments)
-  $('btn-sidebar').classList.toggle('on', s.showSidebar)
+  $('btn-instruments').classList.toggle('on', showInstruments())
+  $('btn-sidebar').classList.toggle('on', showSidebar())
 }
 
 function applyLayout() {
-  const s = settings.get()
-  $('instruments').hidden = !s.showInstruments
-  $('sidebar').hidden = !s.showSidebar
-  document.body.classList.toggle('no-sidebar', !s.showSidebar)
-  document.body.classList.toggle('no-instruments', !s.showInstruments)
+  $('instruments').hidden = !showInstruments()
+  $('sidebar').hidden = !showSidebar()
+  document.body.classList.toggle('no-sidebar', !showSidebar())
+  document.body.classList.toggle('no-instruments', !showInstruments())
+  const t = touchActive() && session !== null
+  document.body.classList.toggle('touch-mode', t)
+  touch.show(t, session?.player.spec.isJet ?? false, session?.player.spec.hasRetractableGear ?? false)
   updateToolbar()
 }
+
+/** Lesson and instructor text, with key hints rewritten when touch controls are on. */
+const say = (s: string) => esc(touch.state.active ? touchText(s) : s)
+
+/** Compact current-step banner for touch mode when the lesson sidebar is hidden. */
+function updateLessonStrip() {
+  const el = $('lesson-strip')
+  const l = lessonOf()
+  const step = l && frame ? l.steps[frame.lessonStepIndex] : undefined
+  const show = touch.state.active && (!showSidebar() || (isCompact() && portrait())) && !!step && !result
+  el.hidden = !show
+  if (!show || !l || !step || !frame) return
+  const text = `${frame.lessonStepIndex + 1}/${l.steps.length} · ${step.title}|${step.instruction}|${frame.lessonProgressText ?? ''}`
+  if (el.dataset.text === text) return
+  el.dataset.text = text
+  el.style.setProperty('--c', catVar(l.category))
+  el.innerHTML = `<b>${frame.lessonStepIndex + 1}/${l.steps.length} · ${esc(step.title)}</b> ${say(step.instruction)}${frame.lessonProgressText ? `<span class="mono">${esc(frame.lessonProgressText)}</span>` : ''}`
+}
+
+/** Height (px) the on-screen controls take at the bottom of the 3D view. */
+function touchInset() { return Math.min(180, $('viewport').clientHeight * 0.38) }
 
 let gaugeCanvases: HTMLCanvasElement[] = []
 function buildInstrumentPanel() {
@@ -365,10 +409,10 @@ function renderSidebar(force: boolean) {
       <div class="row" style="display:flex;align-items:center"><span class="tag" style="--c:${c}">${l.category}</span><span style="flex:1"></span><span class="muted">Step ${Math.min(i + 1, l.steps.length)}/${l.steps.length}</span></div>
       <h2>${esc(l.title)}</h2>
       <div class="progress"><div style="width:${(i / l.steps.length) * 100}%"></div></div>
-      ${step ? `<div class="step-card"><h3>${esc(step.title)}</h3><p>${esc(step.instruction)}</p>
+      ${step ? `<div class="step-card"><h3>${esc(step.title)}</h3><p>${say(step.instruction)}</p>
         ${frame.lessonProgressText ? `<p class="mono tip">${esc(frame.lessonProgressText)}</p>` : ''}
         ${step.hold > 0 ? `<div style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text-2)">Hold <div class="progress" style="flex:1"><div style="width:${Math.min(frame.lessonHold / step.hold, 1) * 100}%"></div></div>${step.hold}s</div>` : ''}
-        ${step.tip ? `<p class="tip">🎓 ${esc(step.tip)}</p>` : ''}</div>` : ''}
+        ${step.tip ? `<p class="tip">🎓 ${say(step.tip)}</p>` : ''}</div>` : ''}
       <ul class="step-list">${l.steps.map((st, k) => `<li class="${k < i ? 'done' : k === i ? 'current' : ''}"><span class="dot"></span>${esc(st.title)}</li>`).join('')}</ul>
     </div>`
   } else {
@@ -382,7 +426,7 @@ function renderSidebar(force: boolean) {
     html += `<div class="panel" style="margin-top:12px"><h3 style="margin:0;font-size:16px">Instructor</h3>`
     if (!frame.hints.length) html += `<p class="muted" style="font-weight:400;margin:0">Looking good. I'll speak up if something needs your attention.</p>`
     for (const h of frame.hints.slice(0, 4)) {
-      html += `<div class="hint" style="--sc:${sevVar[h.severity]}"><b>${esc(h.text)}</b>${level === 'explain' ? `<small>${esc(h.why)}</small>` : ''}</div>`
+      html += `<div class="hint" style="--sc:${sevVar[h.severity]}"><b>${say(h.text)}</b>${level === 'explain' ? `<small>${say(h.why)}</small>` : ''}</div>`
     }
     html += '</div>'
   }
@@ -421,6 +465,8 @@ function openSettings(tab: Tab = 'Flying') {
   const body: Record<Tab, string> = {
     Flying: check('autoRudder', 'Auto-rudder (keeps turns coordinated and the takeoff roll straight)') + check('invertPitch', 'Invert pitch (W / ↑ pulls the nose up)') +
       range('stickSensitivity', 'Stick sensitivity', 0.4, 1.5, 0.1, units.stickSensitivity!) + range('keyboardCentering', 'Keyboard re-centering', 0.3, 2, 0.1, units.keyboardCentering!) +
+      `<label class="field"><span>Touch controls</span><select data-k="touchControls">${(['auto', 'on', 'off'] as const).map(v =>
+        `<option value="${v}" ${s.touchControls === v ? 'selected' : ''}>${{ auto: 'Automatic (touch screens)', on: 'Always on', off: 'Off' }[v]}</option>`).join('')}</select></label>` +
       '<p class="muted" style="font-weight:400">A game controller works too: left stick flies, right stick is rudder, triggers set the throttle, A fires.</p>',
     Instructor: `<label class="field"><span>Instructor</span><select data-k="instructorLevel">${(['off', 'hints', 'explain'] as const).map(v =>
       `<option value="${v}" ${s.instructorLevel === v ? 'selected' : ''}>${{ off: 'Off', hints: 'Hints', explain: 'Hints + why' }[v]}</option>`).join('')}</select></label>
@@ -495,6 +541,11 @@ gl.addEventListener('wheel', e => { e.preventDefault(); world.orbitDistanceScale
 $('zoom-in').onclick = () => { mapScale = Math.max(5, mapScale / 1.6) }
 $('zoom-out').onclick = () => { mapScale = Math.min(250, mapScale * 1.6) }
 $('feedback-tab').onclick = openFeedback
+window.addEventListener('resize', () => {
+  if (portrait() !== compactPortrait) { compactPortrait = portrait(); compact = compactDefaults() }
+  if (session) applyLayout()
+})
+coarse.addEventListener('change', () => { if (session) applyLayout() })
 window.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === ',') { e.preventDefault(); openSettings() }
   if (!session && e.key.toLowerCase() === 'h' && !(e.target instanceof HTMLTextAreaElement)) openHelp()

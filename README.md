@@ -19,7 +19,9 @@ flowchart LR
 
 **[Play it in your browser →](https://amalmehta.github.io/TopGunSimulator/)**
 
-![The web version: canyon run in the browser](docs/screenshots/web-canyon-run.jpg)
+| In the browser | On a phone (touch controls) |
+|---|---|
+| ![The web version: canyon run in the browser](docs/screenshots/web-canyon-run.jpg) | ![Touch controls on a phone: stick, rudder, throttle and lesson strip](docs/screenshots/web-touch-phone.png) |
 
 - **[How to build, run and fly](docs/INSTRUCTIONS.md)**
 - **[System design](docs/SYSTEM-DESIGN.md)**

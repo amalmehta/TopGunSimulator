@@ -83,13 +83,14 @@ Website (2026-10-11), asked and answered: TypeScript + Three.js port; full parit
 Website, decided without asking:
 - Vite + plain DOM (no UI framework); Vitest for tests.
 - The physics port is verified against golden trajectories exported from the Swift model.
-- On touch devices you can look around, but flying needs a keyboard or game controller (no on-screen stick).
+- Touch controls (added 2026-10-11, user chose on-screen stick + throttle): virtual stick, rudder, throttle and buttons, auto-on for touch screens with a Settings override; compact phone layout with a lesson strip; key hints reworded for touch.
 - `?start=` / `?camera=` URL parameters mirror the Mac launch flags.
 - Settings shortcut ⌘, (Ctrl+, elsewhere) plus a gear button.
 
 CHANGELOG:
 
 - 2026-10-11 — created
+- 2026-10-11 — added touch controls for phones and tablets (web)
 - 2026-10-11 — built the website version (web/, Three.js port, golden-trajectory parity tests, GitHub Pages deploy)
 - 2026-10-11 — built v1: Mac app (FlightCore + SwiftUI/SceneKit), 11 lessons, instructor, 3D/2D views, settings, feedback, docs, 26 tests
 - 2026-09-15 — added meta-instruction: built-out applications include a small feedback tab

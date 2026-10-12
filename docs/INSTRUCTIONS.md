@@ -58,7 +58,7 @@ That serves http://localhost:5173. Open a flight directly with `?start=<lesson i
 npm --prefix web test
 ```
 
-That runs 20 tests, including replays of reference trajectories exported from the Swift flight model, to prove both versions fly identically. To regenerate the references after changing the Swift physics:
+That runs 26 tests, including replays of reference trajectories exported from the Swift flight model, to prove both versions fly identically. To regenerate the references after changing the Swift physics:
 
 ```bash
 GOLDEN_OUT="$PWD/web/tests/fixtures/golden.json" swift test --filter GoldenExport
@@ -66,7 +66,16 @@ GOLDEN_OUT="$PWD/web/tests/fixtures/golden.json" swift test --filter GoldenExpor
 
 Production build: `npm --prefix web run build` writes `web/dist/`. Every push to `main` that touches `web/` runs the tests, builds and deploys to GitHub Pages (`.github/workflows/pages.yml`).
 
-Web differences: settings and lesson progress live in the browser's localStorage; the Feedback button opens a pre-filled GitHub issue; ⌘, (Ctrl+, on Windows/Linux) or the gear button opens Settings; on touch devices you can look around, but flying needs a keyboard or game controller.
+Web differences: settings and lesson progress live in the browser's localStorage; the Feedback button opens a pre-filled GitHub issue; ⌘, (Ctrl+, on Windows/Linux) or the gear button opens Settings; on phones and tablets, on-screen touch controls appear automatically (see below).
+
+### Touch controls (phones and tablets)
+
+- **Stick** (bottom-left): drag down to pull back (nose up), up to push forward, sideways to roll. It springs back to centre when you let go.
+- **Rudder** (above the stick): hold ◀ or ▶.
+- **Throttle** (bottom-right): slide up for power. It stays where you leave it.
+- **Buttons:** Flaps ▲/▼, Trim ▲/▼, Gear (fighter), Cam, Brake (hold), Guns (fighter, hold).
+- On phones the instrument panel starts hidden so the 3D view has room. In landscape the sidebar is hidden too, and a lesson strip shows the current step; the toolbar buttons bring the panels back. Lesson and instructor text say "drag the stick down" instead of "S / ↓".
+- Settings → Flying → Touch controls: Automatic (touch screens), Always on, or Off. You can fly with the stick and change the throttle at the same time (multi-touch).
 
 ## How to learn to fly with it
 

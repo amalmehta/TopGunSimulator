@@ -2,6 +2,7 @@
 import { PilotInput } from '../core/aircraft'
 import { clamp } from '../core/math'
 import type { Settings } from './settings'
+import type { TouchState } from './touch'
 
 export type FlightAction = 'flapsUp' | 'flapsDown' | 'toggleGear' | 'trimUp' | 'trimDown' | 'nextCamera'
   | 'togglePause' | 'toggleHelp' | 'toggleSidebar' | 'toggleInstruments' | 'endFlight' | 'restart'
@@ -41,7 +42,7 @@ export class InputManager {
   start() { this.active = true }
   stop() { this.active = false; this.pressed.clear() }
 
-  sample(dt: number, s: Settings): PilotInput {
+  sample(dt: number, s: Settings, touch: TouchState | null = null): PilotInput {
     const held = (...codes: string[]) => codes.some(c => this.pressed.has(c))
     const axis = (cur: number, plus: boolean, minus: boolean, rate: number) => {
       const target = plus === minus ? 0 : plus ? 1 : -1
@@ -73,6 +74,13 @@ export class InputManager {
       if (l2 > 0.05) this.throttle = Math.max(0, this.throttle - l2 * 0.6 * dt)
       if (pad.buttons[0]?.pressed) input.trigger = true
       if (pad.buttons[1]?.pressed) input.brakes = 1
+    }
+    if (touch?.active) {
+      if (touch.pitch || touch.roll) { input.pitch = touch.pitch * s.stickSensitivity; input.roll = touch.roll * s.stickSensitivity }
+      if (touch.yaw) input.yaw = touch.yaw
+      if (touch.throttle !== null) { this.throttle = touch.throttle; touch.throttle = null }
+      if (touch.brakes) input.brakes = 1
+      if (touch.trigger) input.trigger = true
     }
     if (s.invertPitch) input.pitch = -input.pitch
     input.pitch = clamp(input.pitch, -1, 1)

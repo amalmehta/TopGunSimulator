@@ -4,10 +4,11 @@ import type { AircraftSpec } from '../core/aircraft'
 import type { CameraMode } from './world'
 import { prepCanvas, type Frame } from './frame'
 import { fmt } from './settings'
+import { touchText } from './touch'
 
 const GREEN = '#59ff73', WARN = '#ff4d40', BANDIT = '#ff4040', GATE = '#ff9e1a'
 
-export function drawHUD(canvas: HTMLCanvasElement, f: Frame, spec: AircraftSpec, camera: CameraMode, fov: number) {
+export function drawHUD(canvas: HTMLCanvasElement, f: Frame, spec: AircraftSpec, camera: CameraMode, fov: number, bottomInset = 0) {
   const { ctx, w, h } = prepCanvas(canvas)
   const t = f.telemetry
   const c = { x: w / 2, y: h / 2 }
@@ -69,23 +70,28 @@ export function drawHUD(canvas: HTMLCanvasElement, f: Frame, spec: AircraftSpec,
   line([[c.x - 6, ty - 8], [c.x, ty - 1], [c.x + 6, ty - 8]], GREEN, 2)
   text(`${String(Math.round(t.headingDeg) % 360).padStart(3, '0')}°`, c.x, ty + 40, { size: 15 })
 
-  // Speed and altitude boxes
+  // Speed and altitude boxes. With on-screen touch controls they sit higher, clear of the controls.
+  // In portrait the lesson strip sits under the heading tape, so the boxes go below it.
+  const by = bottomInset > 0 ? Math.max(h > w ? 160 : 90, (h - bottomInset) / 2) : c.y
   const lx = c.x - Math.min(w * 0.32, 340), rx = c.x + Math.min(w * 0.32, 340)
   for (const [x, value, label] of [[lx, fmt.speed(t.airspeedKt), 'IAS'], [rx, fmt.altitude(t.altitudeFt), 'ALT']] as const) {
     ctx.strokeStyle = GREEN; ctx.lineWidth = 1.6
-    ctx.beginPath(); ctx.roundRect(x - 58, c.y - 16, 116, 32, 4); ctx.stroke()
-    text(value, x, c.y, { size: 17 })
-    text(label, x, c.y - 28, { size: 11 })
+    ctx.beginPath(); ctx.roundRect(x - 58, by - 16, 116, 32, 4); ctx.stroke()
+    text(value, x, by, { size: 17 })
+    text(label, x, by - 28, { size: 11 })
   }
-  text(fmt.vertical(t.verticalSpeedFpm), rx, c.y + 32)
-  text('AGL ' + fmt.altitude(t.aglFt), rx, c.y + 50, { size: 12 })
-  text(`G ${t.gLoad.toFixed(1)}`, lx, c.y + 32)
-  text(`α ${t.alphaDeg.toFixed(1)}°`, lx, c.y + 50, { size: 12, color: t.stallMargin < 0.2 ? WARN : GREEN })
-  if (spec.isJet) text(`M ${(t.airspeedKt * Units.knot / 340).toFixed(2)}`, lx, c.y + 68, { size: 12 })
-  if (t.airspeedKt < spec.vStallKt * 1.15 && !t.onGround) text('SPEED', lx, c.y - 48, { color: WARN })
+  text(fmt.vertical(t.verticalSpeedFpm), rx, by + 32)
+  text('AGL ' + fmt.altitude(t.aglFt), rx, by + 50, { size: 12 })
+  text(`G ${t.gLoad.toFixed(1)}`, lx, by + 32)
+  text(`α ${t.alphaDeg.toFixed(1)}°`, lx, by + 50, { size: 12, color: t.stallMargin < 0.2 ? WARN : GREEN })
+  if (spec.isJet) text(`M ${(t.airspeedKt * Units.knot / 340).toFixed(2)}`, lx, by + 68, { size: 12 })
+  if (t.airspeedKt < spec.vStallKt * 1.15 && !t.onGround) text('SPEED', lx, by - 48, { color: WARN })
 
   // Systems strip
-  const sy = h - 70
+  // Systems strip: bottom-left normally, top-left (under the heading tape) with touch controls.
+  const top = bottomInset > 0
+  const sy = top ? 14 : h - 70
+  const rowStep = top ? 16 : -20
   let sys = `THR ${Math.round(t.throttle * 100)}%`
   if (t.afterburner) sys += ' AB'
   sys += `   FLAPS ${Math.round(t.flapsDeg)}°`
@@ -98,8 +104,8 @@ export function drawHUD(canvas: HTMLCanvasElement, f: Frame, spec: AircraftSpec,
   if (spec.isJet && f.banditPosition) {
     ctx.strokeStyle = GREEN; ctx.lineWidth = 1.2
     ctx.beginPath(); ctx.arc(c.x, c.y, 18, 0, Math.PI * 2); ctx.stroke()
-    text(`GUN ${f.ammo}`, 18, sy - 20, { align: 'left', size: 12 })
-    if (f.banditDistance !== null) text(`BANDIT ${(f.banditDistance / 1852).toFixed(1)} nm  ${Math.round(f.banditHealth)}%`, 18, sy - 40, { align: 'left', size: 12, color: BANDIT })
+    text(`GUN ${f.ammo}`, 18, sy + rowStep, { align: 'left', size: 12 })
+    if (f.banditDistance !== null) text(`BANDIT ${(f.banditDistance / 1852).toFixed(1)} nm  ${Math.round(f.banditHealth)}%`, 18, sy + rowStep * 2, { align: 'left', size: 12, color: BANDIT })
     const p = f.banditScreen
     if (p && p.x > 20 && p.x < w - 20 && p.y > 20 && p.y < h - 20) {
       ctx.strokeStyle = BANDIT; ctx.lineWidth = 2; ctx.strokeRect(p.x - 16, p.y - 16, 32, 32)
@@ -122,7 +128,7 @@ export function drawHUD(canvas: HTMLCanvasElement, f: Frame, spec: AircraftSpec,
   const warning = f.hints.find(x => x.severity === 2)
   if (warning) {
     ctx.globalAlpha = Math.trunc(t.time * 3) % 2 === 0 ? 1 : 0.55
-    text(warning.text, c.x, h - 40, { size: 22, color: WARN })
+    text(bottomInset > 0 ? touchText(warning.text) : warning.text, c.x, h - 40 - bottomInset, { size: Math.min(22, w / 28), color: WARN })
     ctx.globalAlpha = 1
   }
 }
