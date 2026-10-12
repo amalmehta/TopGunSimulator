@@ -38,7 +38,7 @@ Start straight into a flight (useful for demos):
 swift test
 ```
 
-30 tests (plus an opt-in golden export) cover the atmosphere, terrain, trim and stability, stalls, takeoff, landing and crash detection, the fighter's g-limiter, gates, guns, the bandit AI, lesson flow, and the on-screen controls' stick mapping and input merging. Two of them have a scripted pilot fly whole lessons to a pass.
+34 tests (plus an opt-in golden export) cover the atmosphere, terrain, trim and stability, stalls, takeoff, landing and crash detection, the fighter's g-limiter, gates, guns, the bandit AI, lesson flow, the on-screen controls' stick mapping and input merging, and the controller tilt maths. Two of them have a scripted pilot fly whole lessons to a pass.
 
 ## Web version
 
@@ -117,6 +117,7 @@ Passed lessons get a check mark on the home screen. Settings → Instructor rese
 | \\ | Restart |
 | Esc | End flight |
 | K | On-screen controls on/off (mouse / trackpad) |
+| L | Level controller tilt (or click the left stick) |
 | H | Controls help |
 | ⌘, | Settings |
 
@@ -135,9 +136,18 @@ Keyboard and gamepad keep working alongside them. With them on, the HUD's speed 
 
 ![On-screen controls in the Mac app](screenshots/mac-onscreen-controls.png)
 
+## Tilt a game controller to fly
+
+With a PlayStation DualSense or DualShock 4 (or another controller with a motion sensor), turn on **Settings → Flying → Tilt the game controller to fly**. Tilt the controller's far edge up to pull up, down to push forward, and tip it left or right to roll.
+
+- Your hold when the flight starts is straight and level. Press **L**, click the **left stick**, or choose Flight → Level Controller Tilt to reset it.
+- **Tilt for full stick** (10–60°, default 30°) sets the sensitivity. **Invert tilt pitch** flips up/down if your controller reports its axes the other way.
+- Moving the controller's left stick (or the on-screen stick) overrides tilt. Triggers, rudder and buttons work as usual.
+- Settings lists the connected controllers and whether each has a motion sensor. Macs themselves have no motion sensor apps can read, so tilting the Mac does nothing.
+
 ## Settings (⌘, or the gear button)
 
-- **Flying:** auto-rudder, invert pitch, stick sensitivity, keyboard re-centering speed, on-screen controls
+- **Flying:** auto-rudder, invert pitch, stick sensitivity, keyboard re-centering speed, on-screen controls, controller tilt (with tilt range and invert pitch)
 - **Instructor:** off / hints / hints + why; reset lesson progress
 - **Display:** HUD, instrument panel, sidebar, aviation or metric units, field of view
 - **World:** wind speed and direction, turbulence, bandit skill

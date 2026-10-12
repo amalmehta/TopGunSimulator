@@ -19,6 +19,9 @@ enum SettingsKey {
     static let turbulence = "turbulence"
     static let banditSkill = "banditSkill"
     static let onScreenControls = "onScreenControls"
+    static let controllerTilt = "controllerTilt"
+    static let tiltRangeDeg = "tiltRangeDeg"
+    static let tiltInvertPitch = "tiltInvertPitch"
     static let completedLessons = "completedLessons"
 }
 
@@ -47,6 +50,9 @@ struct SimSettings {
     var turbulence: Double
     var banditSkill: Double
     var onScreenControls: Bool
+    var controllerTilt: Bool
+    var tiltRangeDeg: Double
+    var tiltInvertPitch: Bool
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -65,6 +71,9 @@ struct SimSettings {
             SettingsKey.turbulence: 0.0,
             SettingsKey.banditSkill: 0.6,
             SettingsKey.onScreenControls: false,
+            SettingsKey.controllerTilt: false,
+            SettingsKey.tiltRangeDeg: 30.0,
+            SettingsKey.tiltInvertPitch: false,
         ])
     }
 
@@ -82,7 +91,10 @@ struct SimSettings {
             windFromDeg: d.double(forKey: SettingsKey.windFromDeg),
             turbulence: d.double(forKey: SettingsKey.turbulence),
             banditSkill: d.double(forKey: SettingsKey.banditSkill),
-            onScreenControls: d.bool(forKey: SettingsKey.onScreenControls))
+            onScreenControls: d.bool(forKey: SettingsKey.onScreenControls),
+            controllerTilt: d.bool(forKey: SettingsKey.controllerTilt),
+            tiltRangeDeg: d.double(forKey: SettingsKey.tiltRangeDeg),
+            tiltInvertPitch: d.bool(forKey: SettingsKey.tiltInvertPitch))
     }
 
     var wind: WindModel {

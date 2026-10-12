@@ -31,6 +31,7 @@ struct TopGunSimulatorApp: App {
                 Button("Restart") { sim.restart() }.disabled(!sim.isFlying)
                 Button("Next Camera") { sim.handle(.nextCamera) }.disabled(!sim.isFlying)
                 Button("Toggle On-screen Controls") { sim.handle(.toggleOnScreenControls) }
+                Button("Level Controller Tilt") { sim.handle(.levelTilt) }.disabled(!sim.isFlying)
                 Divider()
                 Button("End Flight") { sim.end() }.disabled(!sim.isFlying)
             }

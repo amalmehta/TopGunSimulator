@@ -53,6 +53,7 @@ flowchart TB
 | `WorldScene` / `AircraftModels` | Builds the terrain mesh (vertex-coloured), runway with markings, lights and live PAPI, buildings, trees and gates. Aircraft are built from primitives with hinged ailerons, elevator, rudder and flaps that deflect, plus prop and afterburner. Runs chase, cockpit, orbit and tower cameras, tracers and explosions. |
 | HUD / instruments / sidebar | Canvas-drawn HUD (pitch ladder and flight-path marker in the cockpit), six-pack, stick-vs-surface readout, moving map, side profile with glidepath, lesson and instructor panels. |
 | Settings / Feedback | Settings window (⌘,) backed by `UserDefaults`; feedback appended to a local JSON-lines file. |
+| `TiltMapping` + `InputManager` | Optional controller tilt: GameController's `GCMotion` gravity (or smoothed total acceleration on controllers that only report that) → roll/pitch relative to a neutral hold, with the user's range, a 2° dead zone and optional pitch invert. The maths is in `FlightCore` and unit-tested. It's applied only while the controller's own stick is centred, and the on-screen stick overrides it. |
 | `OnScreenControls` / `OnScreenControlsView` | Optional mouse/trackpad stick, rudder, throttle and buttons over the 3D view (mirrors the web touch controls). The stick mapping and the merge into `PilotInput` live in `FlightCore` and are unit-tested; the SwiftUI view only sets that state from drag gestures. |
 
 ## Main flows
@@ -80,7 +81,7 @@ flowchart TB
 
 ## Testing
 
-`swift test` runs 30 XCTest cases (plus an opt-in golden export) in `Tests/FlightCoreTests`: ISA values, terrain shape, Euler round-trip, hands-off trim stability (both aircraft), control response directions, the lift curve and stall, stall and recovery, takeoff distance and tracking, sitting still on the runway, fighter takeoff and gear, the g-limiter, gentle vs. hard landings, gate crossing, gun cone, bandit merge, instructor priorities, every lesson starting cleanly, steps not advancing early, the flat approach corridor, scripted pilots passing the Controls and Takeoff lessons, and the on-screen controls (stick mapping, dead zone, input merge, throttle handover). On the web, `npm --prefix web test` runs 37 Vitest cases (golden trajectory replays, ports of the key Swift tests, touch stick/input/wording tests, and tilt maths: neutral, directions, range setting, dead zone, iOS sign, landscape, stick override), and the site was checked in a browser at desktop and phone sizes. The Mac app was checked by launching it with `--start` flags and capturing window screenshots (`scripts/screenshot.sh`).
+`swift test` runs 34 XCTest cases (plus an opt-in golden export) in `Tests/FlightCoreTests`: ISA values, terrain shape, Euler round-trip, hands-off trim stability (both aircraft), control response directions, the lift curve and stall, stall and recovery, takeoff distance and tracking, sitting still on the runway, fighter takeoff and gear, the g-limiter, gentle vs. hard landings, gate crossing, gun cone, bandit merge, instructor priorities, every lesson starting cleanly, steps not advancing early, the flat approach corridor, scripted pilots passing the Controls and Takeoff lessons, the on-screen controls (stick mapping, dead zone, input merge, throttle handover), and controller tilt maths (neutral, directions, range, dead zone, invert, magnitude). On the web, `npm --prefix web test` runs 37 Vitest cases (golden trajectory replays, ports of the key Swift tests, touch stick/input/wording tests, and tilt maths: neutral, directions, range setting, dead zone, iOS sign, landscape, stick override), and the site was checked in a browser at desktop and phone sizes. The Mac app was checked by launching it with `--start` flags and capturing window screenshots (`scripts/screenshot.sh`).
 
 ## Web version
 
@@ -115,6 +116,7 @@ flowchart LR
 
 - The keyboard is a coarse stick, so a game controller flies much better. There is no mouse-yoke mode.
 - No sound, weather visuals, night or multiplayer.
+- Controller tilt is unit-tested but hasn't been flown with a physical controller. Axis conventions differ between controllers, hence the Invert tilt pitch setting.
 - The bandit is a single pursuit AI. It doesn't do energy tactics or defensive breaks.
 - The landing lesson is graded on touchdown sink rate and runway position, not on a full approach-stability score.
 - Startup takes a few seconds while the terrain mesh and map image are generated.

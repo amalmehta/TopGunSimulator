@@ -10,7 +10,7 @@ struct SettingsView: View {
             DisplaySettings().tabItem { Label("Display", systemImage: "display") }
             WorldSettings().tabItem { Label("World", systemImage: "wind") }
         }
-        .frame(width: 500, height: 330)
+        .frame(width: 520, height: 420)
     }
 }
 
@@ -20,6 +20,10 @@ private struct FlyingSettings: View {
     @AppStorage(SettingsKey.stickSensitivity) private var sensitivity = 1.0
     @AppStorage(SettingsKey.keyboardCentering) private var centering = 1.0
     @AppStorage(SettingsKey.onScreenControls) private var onScreenControls = false
+    @AppStorage(SettingsKey.controllerTilt) private var controllerTilt = false
+    @AppStorage(SettingsKey.tiltRangeDeg) private var tiltRange = 30.0
+    @AppStorage(SettingsKey.tiltInvertPitch) private var tiltInvertPitch = false
+    @State private var controllerStatus = InputManager.motionControllerStatus()
 
     var body: some View {
         Form {
@@ -32,6 +36,16 @@ private struct FlyingSettings: View {
                 Slider(value: $centering, in: 0.3...2.0) { EmptyView() } minimumValueLabel: { Text("Slow") } maximumValueLabel: { Text("Snappy") }
             }
             Toggle("On-screen controls (fly with the mouse or trackpad: stick, rudder, throttle and buttons)", isOn: $onScreenControls)
+            Toggle("Tilt the game controller to fly (DualSense, DualShock 4 and other controllers with motion)", isOn: $controllerTilt)
+            if controllerTilt {
+                LabeledContent("Tilt for full stick") {
+                    HStack { Slider(value: $tiltRange, in: 10...60, step: 5); Text("\(Int(tiltRange))°").monospacedDigit().frame(width: 36) }
+                }
+                Toggle("Invert tilt pitch", isOn: $tiltInvertPitch)
+                Text("Hold the controller how you like and press L (or click the left stick) to make that straight and level. Moving the controller's stick overrides tilt.\n\(controllerStatus)")
+                    .font(.callout).foregroundStyle(.secondary)
+                    .onAppear { controllerStatus = InputManager.motionControllerStatus() }
+            }
             Text("A game controller works too: left stick flies, right stick is rudder, triggers set the throttle, A fires.")
                 .font(.callout).foregroundStyle(.secondary)
         }
@@ -131,6 +145,7 @@ struct ControlsHelpView: View {
         ("P", "Pause"),
         ("I / M", "Toggle instruments / map sidebar"),
         ("K", "Toggle on-screen controls (mouse / trackpad)"),
+        ("L", "Level controller tilt (or click the left stick)"),
         ("\\", "Restart"),
         ("Esc", "End flight"),
         ("H", "This help"),

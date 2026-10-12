@@ -71,6 +71,7 @@ final class SimulationController: ObservableObject {
         input.throttle = s.input.throttle
         input.onScreen = OnScreenControls()
         input.onScreen.active = settings.onScreenControls
+        input.levelTilt()
         world.load(session: s)
         result = nil
         crashed = nil
@@ -219,6 +220,9 @@ final class SimulationController: ObservableObject {
         case .toggleSidebar: UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: SettingsKey.showSidebar), forKey: SettingsKey.showSidebar)
         case .toggleInstruments: UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: SettingsKey.showInstruments), forKey: SettingsKey.showInstruments)
         case .toggleOnScreenControls: break
+        case .levelTilt:
+            input.levelTilt()
+            toast(settings.controllerTilt ? "Controller tilt levelled: this is now straight and level" : "Controller tilt is off (Settings → Flying)", .secondary)
         case .endFlight: end()
         case .restart: restart()
         }

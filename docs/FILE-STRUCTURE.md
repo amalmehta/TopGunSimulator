@@ -16,6 +16,7 @@ Sources/FlightCore/               Pure simulation, no UI
   Lessons.swift                   Lesson model, progress tracking and the 11-lesson catalog
   Session.swift                   FlightSession, canyon gates, bandit AI, guns, events
   OnScreenControls.swift          On-screen stick mapping and merge into the pilot input
+  TiltMapping.swift               Controller tilt: gravity vector → stick, calibration
 
 Sources/TopGunSimulator/          The Mac app
   TopGunSimulatorApp.swift        App entry, menus, Settings scene, launch flags
@@ -39,6 +40,7 @@ Tests/FlightCoreTests/
   FlightModelTests.swift          Physics, session, lesson and AI tests
   GoldenExportTests.swift         Exports reference trajectories for the web port (opt-in)
   OnScreenControlsTests.swift     On-screen controls: stick mapping and input merging
+  TiltMappingTests.swift          Controller tilt maths
 
 web/                              The website (TypeScript + Three.js + Vite)
   index.html                      Page shell: home, flight screen, dialogs
