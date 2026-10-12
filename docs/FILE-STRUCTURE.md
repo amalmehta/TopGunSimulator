@@ -35,6 +35,29 @@ Sources/TopGunSimulator/          The Mac app
 
 Tests/FlightCoreTests/
   FlightModelTests.swift          Physics, session, lesson and AI tests
+  GoldenExportTests.swift         Exports reference trajectories for the web port (opt-in)
+
+web/                              The website (TypeScript + Three.js + Vite)
+  index.html                      Page shell: home, flight screen, dialogs
+  package.json, vite.config.ts    Build setup (PAGES_BASE sets the Pages sub-path)
+  public/favicon.svg              Icon
+  src/main.ts                     Frame loop, home screen, sidebar, overlays, settings/help/feedback dialogs
+  src/style.css                   Layout and colour tokens (light + dark)
+  src/core/                       Port of FlightCore: math, environment, aircraft, telemetry,
+                                  instructor, lessons, session (same maths, line for line)
+  src/app/world.ts                Three.js world: terrain, airport, PAPI, gates, cameras, effects
+  src/app/models.ts               3D trainer and fighter with moving control surfaces
+  src/app/hud.ts                  Head-up display
+  src/app/instruments.ts          Six-pack gauges and controls readout
+  src/app/maps.ts                 2D moving map and side profile
+  src/app/input.ts                Keyboard and Gamepad API
+  src/app/settings.ts             localStorage settings, lesson progress, unit formatting
+  src/app/frame.ts, icons.ts      Per-frame snapshot type, canvas helper, SVG icons
+  tests/golden.test.ts            Replays the Swift reference trajectories
+  tests/core.test.ts              Ports of the key Swift tests
+  tests/fixtures/golden.json      Reference trajectories exported from Swift
+
+.github/workflows/pages.yml       Test, build and deploy the website to GitHub Pages
 
 scripts/
   build-app.sh                    Builds build/Top Gun Simulator.app

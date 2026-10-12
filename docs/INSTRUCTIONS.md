@@ -1,5 +1,10 @@
 # Top Gun Simulator: Instructions
 
+There are two versions with the same physics, lessons and controls:
+
+- **Mac app:** native SwiftUI + SceneKit (below).
+- **Website:** TypeScript + Three.js in `web/`, live at https://amalmehta.github.io/TopGunSimulator/ (see [Web version](#web-version)).
+
 ## Requirements
 
 - macOS 14 or later
@@ -34,6 +39,34 @@ swift test
 ```
 
 26 tests cover the atmosphere, terrain, trim and stability, stalls, takeoff, landing and crash detection, the fighter's g-limiter, gates, guns, the bandit AI and lesson flow. Two of them have a scripted pilot fly whole lessons to a pass.
+
+## Web version
+
+Requires Node 20.19+ (22+ recommended).
+
+```bash
+cd web && npm install
+```
+
+```bash
+npm --prefix web run dev
+```
+
+That serves http://localhost:5173. Open a flight directly with `?start=<lesson id or free-trainer|free-fighter|air-trainer|air-fighter>&camera=<Chase|Cockpit|Orbit|Tower>`.
+
+```bash
+npm --prefix web test
+```
+
+That runs 20 tests, including replays of reference trajectories exported from the Swift flight model, to prove both versions fly identically. To regenerate the references after changing the Swift physics:
+
+```bash
+GOLDEN_OUT="$PWD/web/tests/fixtures/golden.json" swift test --filter GoldenExport
+```
+
+Production build: `npm --prefix web run build` writes `web/dist/`. Every push to `main` that touches `web/` runs the tests, builds and deploys to GitHub Pages (`.github/workflows/pages.yml`).
+
+Web differences: settings and lesson progress live in the browser's localStorage; the Feedback button opens a pre-filled GitHub issue; ⌘, (Ctrl+, on Windows/Linux) or the gear button opens Settings; on touch devices you can look around, but flying needs a keyboard or game controller.
 
 ## How to learn to fly with it
 

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Top Gun Simulator: a browser flight simulator that teaches you to fly, from your first lesson to a dogfight." />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <title>Top Gun Simulator</title>
+  </head>
+  <body>
+    <main id="home" class="view"></main>
+
+    <section id="flight" class="view" hidden>
+      <header class="toolbar">
+        <button class="icon-btn" id="btn-menu" title="End flight and return to the menu (Esc)" aria-label="Menu"></button>
+        <h1 id="flight-title"></h1>
+        <div class="spacer"></div>
+        <div class="segmented" id="camera-seg" role="radiogroup" aria-label="Camera"></div>
+        <div class="btn-group">
+          <button class="icon-btn" id="btn-pause" title="Pause (P)" aria-label="Pause"></button>
+          <button class="icon-btn" id="btn-restart" title="Restart (\)" aria-label="Restart"></button>
+          <button class="icon-btn toggle" id="btn-instruments" title="Instrument panel (I)" aria-label="Instruments"></button>
+          <button class="icon-btn toggle" id="btn-sidebar" title="Map, profile and lesson sidebar (M)" aria-label="Sidebar"></button>
+          <button class="icon-btn" id="btn-help" title="Keyboard controls (H)" aria-label="Controls"></button>
+          <button class="icon-btn" id="btn-settings" title="Settings (⌘,)" aria-label="Settings"></button>
+        </div>
+      </header>
+      <div class="flight-body">
+        <div class="main-col">
+          <div class="viewport" id="viewport">
+            <canvas id="gl"></canvas>
+            <canvas id="hud"></canvas>
+            <div id="toasts"></div>
+            <div id="overlay" hidden></div>
+            <div id="touch-hint" hidden>Use a keyboard or game controller to fly.</div>
+          </div>
+          <div id="instruments" class="instruments"></div>
+        </div>
+        <aside id="sidebar">
+          <div class="side-scroll" id="side-panels"></div>
+          <div class="side-header">Map</div>
+          <div class="map-wrap">
+            <canvas id="map"></canvas>
+            <div class="zoom"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button></div>
+          </div>
+          <div class="side-header">Side profile</div>
+          <canvas id="profile"></canvas>
+        </aside>
+      </div>
+    </section>
+
+    <button id="feedback-tab" title="Send feedback">Feedback</button>
+    <dialog id="dlg-settings" aria-label="Settings"></dialog>
+    <dialog id="dlg-help" aria-label="Controls"></dialog>
+    <dialog id="dlg-feedback" aria-label="Feedback"></dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

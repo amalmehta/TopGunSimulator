@@ -2,6 +2,8 @@
 
 ## Architecture
 
+The project ships twice from one design: a **Mac app** (Swift) and a **website** (TypeScript, in `web/`). The web version is a line-for-line port of `FlightCore` plus a browser UI; see [Web version](#web-version).
+
 Two Swift targets. `FlightCore` is pure simulation: no UI, fully unit-tested. `TopGunSimulator` is the SwiftUI + SceneKit Mac app that drives and displays it.
 
 ```mermaid
@@ -77,7 +79,34 @@ flowchart TB
 
 ## Testing
 
-`swift test` runs 26 XCTest cases in `Tests/FlightCoreTests`: ISA values, terrain shape, Euler round-trip, hands-off trim stability (both aircraft), control response directions, the lift curve and stall, stall and recovery, takeoff distance and tracking, sitting still on the runway, fighter takeoff and gear, the g-limiter, gentle vs. hard landings, gate crossing, gun cone, bandit merge, instructor priorities, every lesson starting cleanly, steps not advancing early, the flat approach corridor, and scripted pilots passing the Controls and Takeoff lessons. The app was checked by launching it with `--start` flags and capturing window screenshots (`scripts/screenshot.sh`).
+`swift test` runs 26 XCTest cases (plus an opt-in golden export) in `Tests/FlightCoreTests`: ISA values, terrain shape, Euler round-trip, hands-off trim stability (both aircraft), control response directions, the lift curve and stall, stall and recovery, takeoff distance and tracking, sitting still on the runway, fighter takeoff and gear, the g-limiter, gentle vs. hard landings, gate crossing, gun cone, bandit merge, instructor priorities, every lesson starting cleanly, steps not advancing early, the flat approach corridor, and scripted pilots passing the Controls and Takeoff lessons. On the web, `npm --prefix web test` runs 20 Vitest cases (golden trajectory replays and ports of the key Swift tests), and the site was checked in a browser at desktop and phone sizes. The Mac app was checked by launching it with `--start` flags and capturing window screenshots (`scripts/screenshot.sh`).
+
+## Web version
+
+```mermaid
+flowchart LR
+    subgraph Swift
+        FC[FlightCore] --> GE[GoldenExportTests]
+    end
+    GE -->|golden.json| GT[golden.test.ts]
+    subgraph Web["web/ (Vite + TypeScript)"]
+        Core[src/core<br/>port of FlightCore] --> GT
+        Core --> Main[main.ts<br/>rAF loop · DOM UI]
+        Input[input.ts<br/>keyboard · Gamepad API] --> Main
+        Main --> W[world.ts + models.ts<br/>Three.js]
+        Main --> P[hud · instruments · maps<br/>Canvas 2D]
+        Main --> LS[(localStorage)]
+        Main -->|Feedback| GH[GitHub issue]
+    end
+    Web -->|Actions| Pages[GitHub Pages]
+```
+
+- **Same physics, proven:** `src/core` mirrors each Swift file (math, environment, aircraft, telemetry, instructor, lessons, session) and keeps the same names and constants. A Swift test exports reference trajectories (trimmed manoeuvres, a full takeoff, a fighter max-g pull, a stall), and `golden.test.ts` replays them: velocities agree to 1e-3 m/s and attitude quaternions to 1e-5. The SplitMix64 RNG is reproduced bit-for-bit with BigInt, so turbulence matches too.
+- **Frame loop:** `requestAnimationFrame` samples input, advances the session at fixed 240 Hz steps, updates Three.js every frame and redraws the HUD each frame. Instruments, map, profile and the sidebar redraw at ~30 Hz, and the sidebar DOM is rebuilt only when its content changes.
+- **UI without a framework:** plain DOM and template strings keep the bundle to Three.js plus about 60 kB of app code. The panels are Canvas 2D ports of the SwiftUI Canvas drawing.
+- **Data:** settings and passed lessons are in `localStorage` (wrapped in try/catch; the app still works when storage is blocked). Feedback opens a pre-filled GitHub issue on the repo, so no server is needed.
+- **Deploy:** `.github/workflows/pages.yml` runs `npm test` and `npm run build` with `PAGES_BASE=/TopGunSimulator/`, then publishes `web/dist` to Pages.
+- **Trade-offs:** two codebases must stay in sync (the golden test catches physics drift but not UI drift). Touch devices get no on-screen stick. The terrain mesh is generated on the main thread at startup, which takes about a second.
 
 ## Known limits
 
@@ -86,4 +115,4 @@ flowchart TB
 - The bandit is a single pursuit AI. It doesn't do energy tactics or defensive breaks.
 - The landing lesson is graded on touchdown sink rate and runway position, not on a full approach-stability score.
 - Startup takes a few seconds while the terrain mesh and map image are generated.
-- Mac only for now. A website version is a planned later step.
+- The web version has no touch flight controls; use a keyboard or game controller.
